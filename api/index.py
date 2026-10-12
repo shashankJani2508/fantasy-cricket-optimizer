@@ -367,6 +367,28 @@ def _read(s, mid, kind, files):
             r["player_id"] = pid
         if r["player_id"] is None:
             r["skip_reason"] = ("two players share this name; left out" if twin else "not in our player data yet; left out")
+    twins = [r for r in out["rows"] if r.get("player_id") is None and r["link_name"] != r["name_on_screen"]]
+    if twins:
+        from engine.matching import initials_match
+        role_of = {"wk-batsman": "WK", "batsman": "BAT", "bowler": "BOWL", "bowling allrounder": "AR",
+                   "batting allrounder": "AR", "allrounder": "AR"}
+        c = _client(s)
+        taken = {r["player_id"] for r in out["rows"] if r.get("player_id")}
+        for r in twins:
+            cands = [pid for pid, n in by_team.get(r.get("team_code"), []) if initials_match(r["name_on_screen"], n) and pid not in taken]
+            pick = []
+            for pid in cands:
+                cd = s.player_cricketdata_id(pid)
+                info = (c.player_info(cd) or {}) if cd else {}
+                if role_of.get(str(info.get("role", "")).lower()) == r.get("role"):
+                    pick.append(pid)
+            if len(pick) != 1 and len(cands) == 1:
+                pick = cands
+            if len(pick) == 1:
+                r["player_id"] = pick[0]
+                taken.add(pick[0])
+                s.add_link(pick[0], "dream11", r["link_name"])
+                r.pop("skip_reason", None)
     known = {p["player_id"]: p for p in match_players(s, mid)}   # includes players just added from team history
     for r in out["rows"]:
         if r.get("player_id"):

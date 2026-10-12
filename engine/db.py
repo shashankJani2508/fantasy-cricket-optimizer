@@ -169,7 +169,7 @@ class PgStore:
                               (from_group, to_group))
 
     def debutant_average(self, group):
-        return self._optional("debutant_averages", "SELECT value FROM debutant_averages WHERE format_group = %s", (group,))
+        return self._optional("debutant_averages", "SELECT avg_points FROM debutant_averages WHERE format_group = %s", (group,))
 
     # writes
     def ensure_team(self, name, gender, cricketdata_id=None, short_code=None):
