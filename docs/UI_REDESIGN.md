@@ -68,7 +68,7 @@ Team colours (`team_colours` setting, **must be filled**; grey stripes mean it's
 
 ## 4. Imagery rules
 
-- **Player photos:** CricketData.org `playerImg`, cached in `players.image_url`. The generic placeholder (`https://h.cricapi.com/img/icon512.png`) counts as no photo.
+- **Player photos** (`engine/photos.py`, `python -m engine.cli photos --squads`): 1) CricketData.org `playerImg` unless it is the generic placeholder (`https://h.cricapi.com/img/icon512.png`); 2) else Wikimedia Commons via Wikidata, accepted only when the name matches exactly, the occupation is cricketer, the country matches and exactly one candidate remains, and the licence is public domain, CC0, CC BY or CC BY-SA; 3) else no photo. The player sheet shows "Photo: author, licence" linking to the Commons page, and Settings → Credits lists every Wikimedia photo used.
 - **No photo:** initials in Outfit on a team-colour gradient circle, same size, same ring, so it never looks broken.
 - **Photos on cards:** circular crops with a 2 px team-colour ring and a soft glow; on hero cards, the two highest-scoring players' photos overlap slightly, larger, with a dark gradient beneath.
 - **Countries:** flag icons from an open-licence flag set (e.g. the `flag-icons` package), shown in circles. **Franchise teams** (IPL, BBL…): a monogram (short code) on the team colour. Never use official team or league logos.

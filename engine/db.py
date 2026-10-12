@@ -113,6 +113,10 @@ class PgStore:
                          WHERE x.team_id = %s AND m.start_time::date >= %s::date ORDER BY 1""",
                       (team_id(team, gender), since))
 
+    def player_team_any(self, pid):
+        return self.one("""SELECT t.name FROM match_xi x JOIN teams t ON t.id = x.team_id JOIN matches m ON m.id = x.match_id
+                           WHERE x.player_id = %s ORDER BY m.start_time DESC LIMIT 1""", (pid,))
+
     def player_team(self, mid, pid):
         return self.one("""SELECT t.name FROM match_xi x JOIN teams t ON t.id = x.team_id
                            WHERE x.match_id = %s AND x.player_id = %s""", (mid, pid))

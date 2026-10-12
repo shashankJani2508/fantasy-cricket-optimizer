@@ -285,7 +285,8 @@ Never hardcode or log secrets. Provide `.env.example` with names only.
 | **Open-Meteo** | Rain chance, dew point, humidity at the venue | Each run; fixture cards | Free, no key; cache per venue per hour |
 | **Google Search via Gemini** | Today's team news and pitch report | Moderator step | Only through Gemini grounding; source links stored |
 | **Dream11 app** | Credits, roles, actual points, rank, rules, points table | Aryan (screenshots or typing); us (settings) | **Never automate or scrape Dream11.** No logins, no bots |
-| **Player photos** | Team sheet | Cached URL in `players.image_url` | Use only images supplied by our data provider under its terms; never scrape other sites; fallback to initials avatar |
+| **Google News RSS** | Today's team news for the moderator | Each run | Our code fetches, filters (48 h, mentions, de-dup, max 20) and saves `news_items`; never fetch full articles |
+| **Player photos** | Team sheet, cards, player sheet | `engine.cli photos --squads` (30-day recheck) | CricketData.org `playerImg` if real, else Wikimedia Commons via Wikidata (exact person, free licence, credit shown), else initials avatar; never scrape other sites |
 
 Do not scrape ESPNcricinfo, Cricbuzz or Dream11.
 

@@ -1,0 +1,105 @@
+{
+ "batchcomplete": "",
+ "query": {
+  "pages": {
+   "91152086": {
+    "pageid": 91152086,
+    "ns": 6,
+    "title": "File:Shadab Khan.png",
+    "imagerepository": "local",
+    "imageinfo": [
+     {
+      "thumburl": "https://upload.wikimedia.org/wikipedia/commons/b/ba/Shadab_Khan.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+      "thumbwidth": 400,
+      "thumbheight": 297,
+      "thumbattribs": {
+       "src": "https://upload.wikimedia.org/wikipedia/commons/b/ba/Shadab_Khan.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+       "decoding": "async",
+       "loading": "lazy",
+       "width": 400,
+       "height": 297
+      },
+      "url": "https://upload.wikimedia.org/wikipedia/commons/b/ba/Shadab_Khan.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "descriptionurl": "https://commons.wikimedia.org/wiki/File:Shadab_Khan.png",
+      "descriptionshorturl": "https://commons.wikimedia.org/w/index.php?curid=91152086",
+      "extmetadata": {
+       "DateTime": {
+        "value": "2020-06-12 14:34:29",
+        "source": "mediawiki-metadata",
+        "hidden": ""
+       },
+       "ObjectName": {
+        "value": "Shadab Khan",
+        "source": "mediawiki-metadata"
+       },
+       "CommonsMetadataExtension": {
+        "value": 1.2,
+        "source": "extension",
+        "hidden": ""
+       },
+       "Categories": {
+        "value": "Media from YouTube|Shadab Khan|Files from external sources with reviewed licenses",
+        "source": "commons-categories",
+        "hidden": ""
+       },
+       "Assessments": {
+        "value": "",
+        "source": "commons-categories",
+        "hidden": ""
+       },
+       "ImageDescription": {
+        "value": "<a href=\"https://en.wikipedia.org/wiki/Shadab_Khan\" class=\"extiw\" title=\"en:Shadab Khan\">Shadab Khan</a>  Pakistani cricketer in 2017",
+        "source": "commons-desc-page"
+       },
+       "DateTimeOriginal": {
+        "value": "2017-11-02",
+        "source": "commons-desc-page"
+       },
+       "Credit": {
+        "value": "<a rel=\"nofollow\" class=\"external text\" href=\"https://www.youtube.com/watch?v=Dp9FYQPsrlw\">Pakistan Cricket on Youtube</a>",
+        "source": "commons-desc-page"
+       },
+       "Artist": {
+        "value": "<a rel=\"nofollow\" class=\"external text\" href=\"https://www.youtube.com/channel/UCiWrjBhlICf_L_RK5y6Vrxw\">Pakistan Cricket</a>",
+        "source": "commons-desc-page"
+       },
+       "LicenseShortName": {
+        "value": "CC BY 3.0",
+        "source": "commons-desc-page",
+        "hidden": ""
+       },
+       "UsageTerms": {
+        "value": "Creative Commons Attribution 3.0",
+        "source": "commons-desc-page"
+       },
+       "AttributionRequired": {
+        "value": "true",
+        "source": "commons-desc-page",
+        "hidden": ""
+       },
+       "LicenseUrl": {
+        "value": "https://creativecommons.org/licenses/by/3.0",
+        "source": "commons-desc-page"
+       },
+       "Copyrighted": {
+        "value": "True",
+        "source": "commons-desc-page",
+        "hidden": ""
+       },
+       "Restrictions": {
+        "value": "",
+        "source": "commons-desc-page",
+        "hidden": ""
+       },
+       "License": {
+        "value": "cc-by-3.0",
+        "source": "commons-templates",
+        "hidden": ""
+       }
+      }
+     }
+    ]
+   }
+  }
+ }
+}

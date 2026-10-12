@@ -1,0 +1,82 @@
+{
+ "searchinfo": {
+  "search": "Sri Lanka"
+ },
+ "search": [
+  {
+   "id": "Q854",
+   "title": "Q854",
+   "pageid": 1174,
+   "concepturi": "http://www.wikidata.org/entity/Q854",
+   "repository": "wikidata",
+   "url": "//www.wikidata.org/wiki/Q854",
+   "display": {
+    "label": {
+     "value": "Sri Lanka",
+     "language": "en"
+    },
+    "description": {
+     "value": "island country in South Asia",
+     "language": "en"
+    }
+   },
+   "label": "Sri Lanka",
+   "description": "island country in South Asia",
+   "match": {
+    "type": "label",
+    "language": "en",
+    "text": "Sri Lanka"
+   }
+  },
+  {
+   "id": "Q6828",
+   "title": "Q6828",
+   "pageid": 7961,
+   "concepturi": "http://www.wikidata.org/entity/Q6828",
+   "repository": "wikidata",
+   "url": "//www.wikidata.org/wiki/Q6828",
+   "display": {
+    "label": {
+     "value": "UTC+05:30",
+     "language": "en"
+    },
+    "description": {
+     "value": "identifier for a time offset from UTC of +5:30",
+     "language": "en"
+    }
+   },
+   "label": "UTC+05:30",
+   "description": "identifier for a time offset from UTC of +5:30",
+   "match": {
+    "type": "alias",
+    "language": "en",
+    "text": "Sri Lanka Standard Time"
+   },
+   "aliases": [
+    "Sri Lanka Standard Time"
+   ]
+  },
+  {
+   "id": "Q139734667",
+   "title": "Q139734667",
+   "pageid": 133190506,
+   "concepturi": "http://www.wikidata.org/entity/Q139734667",
+   "repository": "wikidata",
+   "url": "//www.wikidata.org/wiki/Q139734667",
+   "display": {
+    "label": {
+     "value": "Sri Lanka",
+     "language": "en"
+    }
+   },
+   "label": "Sri Lanka",
+   "match": {
+    "type": "label",
+    "language": "en",
+    "text": "Sri Lanka"
+   }
+  }
+ ],
+ "search-continue": 3,
+ "success": 1
+}

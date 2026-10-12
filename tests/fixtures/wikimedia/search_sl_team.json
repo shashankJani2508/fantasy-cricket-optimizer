@@ -1,0 +1,54 @@
+{
+ "searchinfo": {
+  "search": "Sri Lanka national cricket team"
+ },
+ "search": [
+  {
+   "id": "Q203092",
+   "title": "Q203092",
+   "pageid": 199595,
+   "concepturi": "http://www.wikidata.org/entity/Q203092",
+   "repository": "wikidata",
+   "url": "//www.wikidata.org/wiki/Q203092",
+   "display": {
+    "label": {
+     "value": "Sri Lanka national cricket team",
+     "language": "en"
+    },
+    "description": {
+     "value": "national sports team",
+     "language": "en"
+    }
+   },
+   "label": "Sri Lanka national cricket team",
+   "description": "national sports team",
+   "match": {
+    "type": "label",
+    "language": "en",
+    "text": "Sri Lanka national cricket team"
+   }
+  },
+  {
+   "id": "Q28454930",
+   "title": "Q28454930",
+   "pageid": 30149683,
+   "concepturi": "http://www.wikidata.org/entity/Q28454930",
+   "repository": "wikidata",
+   "url": "//www.wikidata.org/wiki/Q28454930",
+   "display": {
+    "label": {
+     "value": "Sri Lanka national cricket team record by opponent",
+     "language": "en"
+    }
+   },
+   "label": "Sri Lanka national cricket team record by opponent",
+   "match": {
+    "type": "label",
+    "language": "en",
+    "text": "Sri Lanka national cricket team record by opponent"
+   }
+  }
+ ],
+ "search-continue": 2,
+ "success": 1
+}

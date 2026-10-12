@@ -16,7 +16,7 @@ Conventions: `id` is a UUID primary key unless stated; timestamps are `timestamp
 
 **venue_pitch_types**: `venue_id`, `format_group`, `pitch_type` (`batting` / `bowling` / `unknown`), `matches_n`, `avg_first_innings`, `updated_at`
 
-**players**: `id`, `full_name`, `gender`, `cricsheet_id`, `cricketdata_id`, `image_url`, `image_source`, `batting_style` (nullable), `bowling_style` (nullable), `updated_at`
+**players**: `id`, `full_name`, `gender`, `cricsheet_id`, `cricketdata_id`, `image_url`, `image_source` (`cricketdata` / `wikimedia` / `none`), `image_license`, `image_author`, `image_page_url`, `image_checked_at`, `image_skip_reason`, `batting_style` (nullable), `bowling_style` (nullable), `updated_at`
 
 **player_name_links**: `id`, `player_id`, `source` (`dream11` / `cricketdata` / `cricsheet`), `source_name`, `confirmed_by_aryan` (bool), `confirmed_at`
 

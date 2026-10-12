@@ -1,0 +1,58 @@
+{
+ "searchinfo": {
+  "search": "Pakistan national cricket team"
+ },
+ "search": [
+  {
+   "id": "Q182538",
+   "title": "Q182538",
+   "pageid": 181634,
+   "concepturi": "http://www.wikidata.org/entity/Q182538",
+   "repository": "wikidata",
+   "url": "//www.wikidata.org/wiki/Q182538",
+   "display": {
+    "label": {
+     "value": "Pakistan national cricket team",
+     "language": "en"
+    },
+    "description": {
+     "value": "national sports team",
+     "language": "en"
+    }
+   },
+   "label": "Pakistan national cricket team",
+   "description": "national sports team",
+   "match": {
+    "type": "label",
+    "language": "en",
+    "text": "Pakistan national cricket team"
+   }
+  },
+  {
+   "id": "Q14939617",
+   "title": "Q14939617",
+   "pageid": 16608754,
+   "concepturi": "http://www.wikidata.org/entity/Q14939617",
+   "repository": "wikidata",
+   "url": "//www.wikidata.org/wiki/Q14939617",
+   "display": {
+    "label": {
+     "value": "Pakistan national cricket team record by opponent",
+     "language": "en"
+    },
+    "description": {
+     "value": "team statistics",
+     "language": "en"
+    }
+   },
+   "label": "Pakistan national cricket team record by opponent",
+   "description": "team statistics",
+   "match": {
+    "type": "label",
+    "language": "en",
+    "text": "Pakistan national cricket team record by opponent"
+   }
+  }
+ ],
+ "success": 1
+}

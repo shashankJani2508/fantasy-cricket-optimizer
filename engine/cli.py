@@ -155,6 +155,23 @@ def cmd_score(store, c, match, run_type):
         print("warning:", w)
 
 
+def cmd_photos(store, a, dry):
+    """Makes no CricketData.org calls; Wikimedia only."""
+    from engine.photos import refresh_player, squad_players
+    rows = squad_players(store) if a.squads else [(a.player, store.full_name(a.player), store.player_team_any(a.player))]
+    if dry:
+        print(f"Dry run: would check {len(rows)} players on Wikidata/Commons (no CricketData.org calls).")
+        return
+    tally = {}
+    for pid, name, team in rows:
+        src, why = refresh_player(store, pid, team, force=a.force)
+        tally[src] = tally.get(src, 0) + 1
+        print(f"{name:28} {team:12} {src:12} {why or ''}")
+    real = tally.get("wikimedia", 0) + tally.get("cricketdata", 0)
+    print(f"{real} of {len(rows)} players have a real photo ({tally.get('wikimedia', 0)} from Wikimedia, "
+          f"{tally.get('cricketdata', 0)} from CricketData.org)")
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="engine.cli")
     ap.add_argument("--dry-run", action="store_true", help="print how many live calls would be made; make none")
@@ -172,6 +189,10 @@ def main(argv=None):
     lk.add_argument("--player", required=True, help="players.id (Cricsheet register identifier)")
     sub.add_parser("refresh-register", help="download the Cricsheet people register (names.csv, people.csv)")
     sub.add_parser("seed-cache")
+    ph = sub.add_parser("photos", help="player photos: CricketData.org, else Wikimedia Commons via Wikidata")
+    ph.add_argument("--squads", action="store_true", help="every player in the next 7 days' squads")
+    ph.add_argument("--player", help="one players.id")
+    ph.add_argument("--force", action="store_true", help="re-check players checked in the last 30 days")
     for p in sub.choices.values():   # accept --dry-run after the command name too
         p.add_argument("--dry-run", action="store_true", dest="dry_run_cmd", help=argparse.SUPPRESS)
     a = ap.parse_args(argv)
@@ -207,6 +228,8 @@ def main(argv=None):
     elif a.cmd == "seed-cache":
         if not dry:
             cmd_seed(store)
+    elif a.cmd == "photos":
+        cmd_photos(store, a, dry)
     if a.cmd != "score":
         for w in c.warnings:
             print("warning:", w)

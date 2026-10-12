@@ -1,0 +1,87 @@
+{
+ "searchinfo": {
+  "search": "cricketer"
+ },
+ "search": [
+  {
+   "id": "Q12299841",
+   "title": "Q12299841",
+   "pageid": 13511967,
+   "concepturi": "http://www.wikidata.org/entity/Q12299841",
+   "repository": "wikidata",
+   "url": "//www.wikidata.org/wiki/Q12299841",
+   "display": {
+    "label": {
+     "value": "cricketer",
+     "language": "en"
+    },
+    "description": {
+     "value": "individual who takes part in cricket matches",
+     "language": "en"
+    }
+   },
+   "label": "cricketer",
+   "description": "individual who takes part in cricket matches",
+   "match": {
+    "type": "label",
+    "language": "en",
+    "text": "cricketer"
+   }
+  },
+  {
+   "id": "Q20446018",
+   "title": "Q20446018",
+   "pageid": 22194706,
+   "concepturi": "http://www.wikidata.org/entity/Q20446018",
+   "repository": "wikidata",
+   "url": "//www.wikidata.org/wiki/Q20446018",
+   "display": {
+    "label": {
+     "value": "Cricketer",
+     "language": "en"
+    },
+    "description": {
+     "value": "painting by Fred Williams",
+     "language": "en"
+    }
+   },
+   "label": "Cricketer",
+   "description": "painting by Fred Williams",
+   "match": {
+    "type": "label",
+    "language": "en",
+    "text": "Cricketer"
+   }
+  },
+  {
+   "id": "Q66377209",
+   "title": "Q66377209",
+   "pageid": 65979322,
+   "concepturi": "http://www.wikidata.org/entity/Q66377209",
+   "repository": "wikidata",
+   "url": "//www.wikidata.org/wiki/Q66377209",
+   "display": {
+    "label": {
+     "value": "Vaibhav Davne",
+     "language": "en"
+    },
+    "description": {
+     "value": "Vaibhav Davne Playing India Match",
+     "language": "en"
+    }
+   },
+   "label": "Vaibhav Davne",
+   "description": "Vaibhav Davne Playing India Match",
+   "match": {
+    "type": "alias",
+    "language": "en",
+    "text": "Cricketer"
+   },
+   "aliases": [
+    "Cricketer"
+   ]
+  }
+ ],
+ "search-continue": 3,
+ "success": 1
+}
