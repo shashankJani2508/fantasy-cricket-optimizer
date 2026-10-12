@@ -161,3 +161,25 @@ def compute_factors(target, hist, other_hist, venue_type, cfg):
 
 def predict(factors, weights):
     return sum(weights.get(k, 0.0) * factors[k] for k in FACTORS)
+
+
+# ---------------------------------------------------------------- added for the scoring engine
+
+def trust_from_n(n, full_trust):
+    """Thin-data trust (spec 6.3): 0 for n = 0, else min(n / full_trust, 1)."""
+    return 0.0 if n <= 0 else min(n / full_trust, 1.0)
+
+
+def compute_factors_with_trust(target, hist, other_hist, venue_type, cfg, pre_toss=False):
+    """compute_factors plus a trust per factor (form, career, current_touch = 1).
+    pre_toss=True applies the spec's pre-toss rule: bat_first_or_chase = form, trust 0
+    (target.batted_first is ignored)."""
+    f, n = compute_factors(target, hist, other_hist, venue_type, cfg)
+    trust = {"form": 1.0, "career": 1.0, "current_touch": 1.0}
+    for k in THIN_DATA_FACTORS:
+        trust[k] = trust_from_n(n[k], cfg["thin_data_threshold"])
+    if pre_toss:
+        f = dict(f)
+        f["bat_first_or_chase"] = f["form"]
+        trust["bat_first_or_chase"] = 0.0
+    return f, trust

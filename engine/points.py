@@ -114,3 +114,44 @@ def player_points(stats, fmt, cfg):
     xi = float(c["other"]["playing_xi"]) if stats["in_xi"] else 0.0
     return {"batting": bat, "bowling": bowl, "fielding": field, "playing_xi": xi,
             "total": bat + bowl + field + xi}
+
+
+# ---------------------------------------------------------------- added for the scoring engine
+
+def _balls_from_overs(o):
+    """CricketData.org gives overs like 3.4 (3 overs + 4 balls)."""
+    whole = int(o)
+    return whole * 6 + int(round((o - whole) * 10))
+
+
+def from_scorecard(scorecard_row, fmt, cfg):
+    """Provisional Dream11 points for one player from a CricketData.org scorecard
+    (match_scorecard response; fields confirmed in tests/fixtures/cricketdata/match_scorecard.json).
+
+    scorecard_row = {"bat": [{"r", "b", "4s", "6s", "dismissal", "position"}],
+                     "bowl": [{"o", "m", "r", "w"}], "lbw_bowled": int,
+                     "catching": {"catch", "cb", "stumped", "runout"}}
+
+    Supported: runs, fours, sixes, milestones, duck, strike rate, wickets, maidens, hauls,
+    economy, catches, stumpings, LBW/bowled bonus (counted from batters' `dismissal` values),
+    playing XI (only for players who appear in the scorecard).
+    NOT supported by scorecards (point type skipped):
+      - dot balls (no ball-by-ball data)
+      - run out direct vs not direct: `runout` is a single count; scored at the not-direct value
+        (TODO-CONFIRM)
+      - playing-XI points for players who neither batted, bowled nor fielded (not listed)
+      - `cb` is assumed to mean caught-and-bowled and counted as a catch (TODO-CONFIRM)
+    Only `catch` dismissals and not-out rows (dismissal = null) were seen in the saved fixture;
+    other dismissal names are TODO-CONFIRM.
+    """
+    bat = [{"runs": i["r"], "balls": i["b"], "fours": i["4s"], "sixes": i["6s"],
+            "out": i.get("dismissal") is not None} for i in scorecard_row.get("bat", [])]
+    bowl = [{"balls": _balls_from_overs(i["o"]), "runs": i["r"], "dots": 0, "maidens": i["m"],
+             "wickets": i["w"], "lbw_bowled": 0} for i in scorecard_row.get("bowl", [])]
+    if bowl:
+        bowl[0]["lbw_bowled"] = scorecard_row.get("lbw_bowled", 0)
+    c = scorecard_row.get("catching", {})
+    stats = {"bat": bat, "bowl": bowl,
+             "catches": c.get("catch", 0) + c.get("cb", 0), "stumpings": c.get("stumped", 0),
+             "ro_direct": 0, "ro_indirect": c.get("runout", 0), "in_xi": True}
+    return player_points(stats, fmt, cfg)
