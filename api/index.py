@@ -95,11 +95,15 @@ def _iso(t):
     return t.isoformat() if t else None
 
 
+_COLOURS = yaml.safe_load((ROOT / "config" / "team_colours.yaml").read_text(encoding="utf8")) or {}
+
+
 def team_view(s, tid):
     r = s.q("SELECT name, short_code, colour_hex FROM teams WHERE id = %s", (tid,))
     if not r:
         return None
-    return {"id": tid, "name": r[0][0], "code": r[0][1] or r[0][0], "colour": r[0][2]}
+    cfg = _COLOURS.get(r[0][0]) or {}   # config/team_colours.yaml fills what the database doesn't have
+    return {"id": tid, "name": r[0][0], "code": r[0][1] or cfg.get("code") or r[0][0], "colour": r[0][2] or cfg.get("colour")}
 
 
 def match_view(s, mid):
@@ -184,7 +188,8 @@ def match_players(s, mid):
     rows = s.q("""SELECT DISTINCT ON (p.id) p.id, p.full_name, p.image_url, t.name, t.short_code, t.colour_hex
                     FROM match_xi x JOIN players p ON p.id = x.player_id JOIN teams t ON t.id = x.team_id
                    WHERE x.match_id = %s ORDER BY p.id""", (mid,))
-    return [{"player_id": a, "name": b, "image_url": c, "team": d, "team_code": e or d, "colour": f}
+    return [{"player_id": a, "name": b, "image_url": c, "team": d,
+             "team_code": e or (_COLOURS.get(d) or {}).get("code") or d, "colour": f or (_COLOURS.get(d) or {}).get("colour")}
             for a, b, c, d, e, f in rows]
 
 

@@ -1,5 +1,7 @@
 # UI/UX Spec
 
+> **Visual design update:** the look (colours, type, cards, imagery, layout on desktop) is now defined in `UI_REDESIGN.md`, based on the reference in `design/reference/dribbble-reference.png`. Section 2 below is superseded wherever it conflicts. Flows, screens, states, words and data in this file still apply.
+
 **The UI is the product.** Aryan should be able to go from "which matches are on this week?" to "my team is ready" in a few swipes and taps, and trust every number on screen. Minimal screens, one clear action per screen, nothing decorative that doesn't carry meaning.
 
 Built mobile-first (Aryan uses it on his phone before a match), fully usable on desktop.

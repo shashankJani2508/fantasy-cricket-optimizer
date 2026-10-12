@@ -148,7 +148,8 @@ LEARNING ─► metrics ─► patterns ─► flag ─► Gemini Job 3 ─► h
 | File | Covers | Wins on |
 |---|---|---|
 | `CLAUDE.md` (this file) | Process, stack, flows, phases, constraints | Process and constraints |
-| `docs/UI_UX.md` | Every screen, state, gesture, word and visual token | Anything the user sees or touches |
+| `docs/UI_REDESIGN.md` | The visual design, matched to `design/reference/dribbble-reference.png` | **How anything looks** |
+| `docs/UI_UX.md` | Every screen, state, gesture and word | Flows and behaviour |
 | `docs/NEON_SCHEMA.md` | Every table and column | Table and column names |
 | `docs/RUBRIC.md` | Factors, formula, thresholds, fallbacks, backtest results | Factor definitions and numbers |
 | `docs/SCORING_ENGINE.md` | Engine flow, freshness, fallback chain, call budget | Engine behaviour |

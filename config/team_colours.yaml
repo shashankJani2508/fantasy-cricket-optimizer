@@ -1,0 +1,15 @@
+# Team colour (main kit colour, well-known; for the UI only: card art, story rings, photo rings) and short code.
+# Filled 13 Oct 2026 for the teams in the current fixtures plus the other Test nations. Check and edit freely.
+# Keyed by the team name as stored in Neon (teams.name).
+Pakistan:      {code: PAK, colour: "#0B7A3E"}
+Sri Lanka:     {code: SL,  colour: "#1E3F8F"}
+India:         {code: IND, colour: "#1F6FD1"}
+Australia:     {code: AUS, colour: "#F2C200"}
+England:       {code: ENG, colour: "#1B2A57"}
+New Zealand:   {code: NZ,  colour: "#1A1A1A"}
+South Africa:  {code: SA,  colour: "#007A4D"}
+West Indies:   {code: WI,  colour: "#7A1F2B"}
+Bangladesh:    {code: BAN, colour: "#00704A"}
+Afghanistan:   {code: AFG, colour: "#1C4FA3"}
+Zimbabwe:      {code: ZIM, colour: "#D4262C"}
+Ireland:       {code: IRE, colour: "#16A05D"}

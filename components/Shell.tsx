@@ -1,45 +1,42 @@
 "use client";
+import { CalendarDays, ClipboardList, LineChart } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
-import { useAuth } from "./ui";
+import { Welcome } from "./Welcome";
 
 const TABS = [
-  { href: "/upcoming", label: "Upcoming", icon: "M4 6h16M4 12h16M4 18h10" },
-  { href: "/results", label: "Results", icon: "M5 4h14v16H5zM9 8h6M9 12h6M9 16h3" },
-  { href: "/learnings", label: "Learnings", icon: "M4 18l5-6 4 3 7-9" },
+  { href: "/upcoming", label: "Upcoming", Icon: CalendarDays },
+  { href: "/results", label: "Results", Icon: ClipboardList },
+  { href: "/learnings", label: "Learnings", Icon: LineChart },
 ];
 
+// Phone-width column on every device (UI_REDESIGN.md section 3); floating glass pill tab bar.
 export function Shell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
-  const { aryan } = useAuth();
   const [waiting, setWaiting] = useState(0);
   useEffect(() => { api("/learnings").then((r) => setWaiting(r.inbox.length)).catch(() => {}); }, [path]);
-  const nav = (rail: boolean) => TABS.map((t) => {
-    const on = path.startsWith(t.href);
-    return (
-      <Link key={t.href} href={t.href} aria-current={on ? "page" : undefined}
-        className={`relative flex min-h-[56px] flex-1 flex-col items-center justify-center gap-1 text-s12 md:flex-none md:flex-row md:justify-start md:gap-3 md:rounded-sheet md:px-4 md:text-s16 ${on ? "text-floodlight" : "text-sightscreen/80"}`}>
-        <svg aria-hidden width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d={t.icon} /></svg>
-        <span>{t.label}</span>
-        {t.href === "/learnings" && waiting > 0 && <span className="num absolute right-[28%] top-1 rounded-full bg-ball px-1.5 text-s12 text-white md:static" aria-label={`${waiting} waiting`}>{waiting}</span>}
-        {rail && null}
-      </Link>
-    );
-  });
   return (
-    <div className="min-h-screen md:flex">
-      <nav aria-label="Main" className="hidden w-56 shrink-0 flex-col gap-1 bg-pavilion p-4 md:flex">
-        <div className="num mb-6 px-4 text-s28 text-sightscreen">Match day</div>
-        {nav(true)}
-        {!aryan && <span className="mt-auto px-4 text-s12 text-sightscreen/70">View only</span>}
+    <div className="mx-auto min-h-screen w-full max-w-[440px] md:my-6 md:min-h-[calc(100vh-48px)] md:overflow-hidden md:rounded-[40px] md:border md:border-white/10 md:bg-bg/40 md:shadow-card">
+      <Welcome />
+      <main className="px-5 pb-32 pt-6">{children}</main>
+      <nav aria-label="Tabs" className="fixed inset-x-0 bottom-4 z-40 mx-auto flex w-[calc(100%-40px)] max-w-[400px] justify-around rounded-full glass px-2 py-1.5 shadow-card">
+        {TABS.map(({ href, label, Icon }) => {
+          const on = path.startsWith(href);
+          return (
+            <Link key={href} href={href} aria-current={on ? "page" : undefined}
+              className={`relative flex min-h-[52px] flex-1 flex-col items-center justify-center gap-0.5 rounded-full text-s12 font-semibold transition ${on ? "text-ink" : "text-muted hover:text-ink"}`}>
+              <Icon aria-hidden size={22} strokeWidth={1.75} />
+              <span>{label}</span>
+              {on && <span aria-hidden className="absolute bottom-1 h-1 w-1 rounded-full bg-red" />}
+              {href === "/learnings" && waiting > 0 && (
+                <span className="num absolute right-[22%] top-1 min-w-5 rounded-full bg-red px-1.5 text-center text-[11px] font-bold text-white" aria-label={`${waiting} waiting`}>{waiting}</span>
+              )}
+            </Link>
+          );
+        })}
       </nav>
-      <main className="mx-auto w-full max-w-[1100px] px-4 pb-28 pt-4 md:pb-10">
-        {!aryan && <div className="mb-2 flex justify-end md:hidden"><span className="rounded-full bg-slate/15 px-3 py-1 text-s12">View only</span></div>}
-        {children}
-      </main>
-      <nav aria-label="Tabs" className="fixed inset-x-0 bottom-0 z-40 flex bg-pavilion pb-[env(safe-area-inset-bottom)] md:hidden">{nav(false)}</nav>
     </div>
   );
 }
