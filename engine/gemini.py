@@ -94,7 +94,11 @@ def _http(body, model, key, timeout=TIMEOUT_S):
         with urllib.request.urlopen(req, timeout=timeout) as r:
             return json.load(r)
     except urllib.error.HTTPError as e:
-        raise GeminiFailed(f"Gemini HTTP {e.code}") from None
+        try:
+            msg = json.loads(e.read().decode()).get("error", {}).get("message", "")[:200]
+        except Exception:
+            msg = ""
+        raise GeminiFailed(f"Gemini HTTP {e.code} {msg}".strip()) from None
 
 
 def response_text(resp):
@@ -155,6 +159,8 @@ class Gemini:
                 self.model = resp.get("modelVersion") or self.model
             except (GeminiFailed, ValueError, KeyError, TypeError, OSError) as e:
                 last = f"{type(e).__name__}: {e}"
+                if "HTTP 429" in last and attempt < MAX_RETRIES:
+                    self.sleep(10)   # rate limited: wait longer than the normal backoff
                 self._log(job, run_id, summary, {"error": last}, False, [last], int((time.time() - t0) * 1000))
                 continue
             data["_sources"] = sources

@@ -249,19 +249,59 @@ def _read(s, mid, kind, files):
                                            st.get("screenshot_points_range"))
     except GeminiFailed:
         raise HTTPException(502, "Couldn't read the screenshot. Try a clearer one, or type the values instead.")
+    # the same player can appear on several screenshots (e.g. list without credits + preview with credits): merge
+    merged = {}
+    for r in out["rows"]:
+        k = (r["name_on_screen"].lower(), r.get("team_code"), r.get("role"))   # two "K Mendis" differ by role
+        if k in merged:
+            m0 = merged[k]
+            for f in ("role", "credits", "points"):
+                if m0.get(f) is None and r.get(f) is not None:
+                    m0[f] = r[f]
+            m0["unsure"] = (m0["role"] is None or (kind == "player_list" and m0["credits"] is None)
+                            or (kind == "points" and m0["points"] is None))
+        else:
+            merged[k] = r
+    out["rows"] = list(merged.values())
     matcher = Matcher(s)
     by_team = {}
     for p in players:
         by_team.setdefault(p["team_code"], []).append((p["player_id"], p["name"]))
     hint_all = [(p["player_id"], p["name"]) for p in players]
+    names = [(r["name_on_screen"].lower(), r.get("team_code")) for r in out["rows"]]
     for r in out["rows"]:
         hint = by_team.get(r.get("team_code")) or hint_all
-        r["player_id"] = matcher.resolve("dream11", r["name_on_screen"], hint)
+        # identical names in one team (e.g. two "K Mendis") are remembered with their Dream11 role
+        twin = names.count((r["name_on_screen"].lower(), r.get("team_code"))) > 1
+        r["link_name"] = f"{r['name_on_screen']} ({r.get('role')})" if twin else r["name_on_screen"]
+        r["player_id"] = (matcher.resolve("dream11", r["link_name"], [(p, n) for p, n in hint if s.links("dream11", r["link_name"])])
+                          if twin else matcher.resolve("dream11", r["name_on_screen"], hint))
+        if r["player_id"] is None:
+            cut = [pid for pid, n in hint if truncated_match(r["name_on_screen"], n)]
+            if len(cut) == 1:   # Dream11 cuts long names ("C Wickramas..."); accept only a unique prefix match
+                r["player_id"] = cut[0]
+                s.add_link(cut[0], "dream11", r["name_on_screen"])
         if r["player_id"] is None:
             from engine.matching import initials_match, surname_initial_match
             r["suggestions"] = [pid for pid, n in hint if initials_match(r["name_on_screen"], n)
                                 or surname_initial_match(r["name_on_screen"], n)][:3]
     return out
+
+
+def truncated_match(shown, full):
+    """'C Wickramas...' vs 'C Wickramasinghe' / 'SSD Arachchige' / 'Sineth Jayawardena': same given-name initial and
+    the visible surname is the start of the real one."""
+    name = shown.strip()
+    core = name.rstrip(".… ").strip()
+    if core == name or len(core.split()) < 2:
+        return False
+    ini, pre = core.split()[0][0].upper(), core.split()[-1].lower()
+    parts = full.split()
+    if len(parts) < 2 or not parts[-1].lower().startswith(pre):
+        return False
+    first = parts[0]
+    given = set(first.upper()) if first.isupper() and len(first) <= 4 else {w[0].upper() for w in parts[:-1]}
+    return ini in given
 
 
 @app.post("/api/matches/{mid}/screenshots/player-list", dependencies=[Depends(need_passcode)])

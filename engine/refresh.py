@@ -23,6 +23,17 @@ def our_status(m):
     return "live" if m.get("matchStarted") else "upcoming"
 
 
+def start_gmt(m):
+    """CricketData.org's dateTimeGMT can disagree with its own status text ("Match starts at Oct 13, 13:00 GMT");
+    Dream11 confirmed the status text for the 3rd T20I PAK v SL (6:30 pm IST = 13:00 GMT), so it wins when present."""
+    import re
+    got = re.search(r"Match starts at (\w{3}) (\d{1,2}), (\d{2}:\d{2}) GMT", m.get("status") or "")
+    if got and m.get("date"):
+        t = dt.datetime.strptime(f"{m['date'][:4]} {got[1]} {got[2]} {got[3]}", "%Y %b %d %H:%M")
+        return t.strftime("%Y-%m-%dT%H:%M:%S")
+    return m["dateTimeGMT"]
+
+
 def upsert_match(store, m):
     """Store one CricketData.org match (list or info shape). Returns our match id or None if format unsupported."""
     fmt = match_format(m.get("matchType"), m.get("name"))
@@ -31,9 +42,10 @@ def upsert_match(store, m):
     gender = gender_of(m.get("teams", []))
     for t in m.get("teamInfo") or []:
         store.ensure_team(base_team(t["name"]), gender, short_code=t.get("shortname"))
-    mid = store.ensure_cricketdata_match({**m, "dateTimeGMT": m["dateTimeGMT"] + "+00:00"}, fmt, gender,
+    mid = store.ensure_cricketdata_match({**m, "dateTimeGMT": start_gmt(m) + "+00:00"}, fmt, gender,
                                          spec_group(fmt, gender), base_team=base_team)
-    store.q("UPDATE matches SET status = %s, updated_at = now() WHERE id = %s RETURNING id", (our_status(m), mid))
+    store.q("UPDATE matches SET status = %s, start_time = %s, updated_at = now() WHERE id = %s RETURNING id",
+            (our_status(m), start_gmt(m) + "+00:00", mid))
     return mid
 
 

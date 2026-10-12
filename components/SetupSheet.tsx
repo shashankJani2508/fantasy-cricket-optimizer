@@ -8,7 +8,7 @@ import { BuildProgress } from "./BuildProgress";
 
 type Row = { player_id: string; name: string; team: string; team_code: string; colour: string | null; image_url: string | null;
   role: Role | null; credits: number | null; via: "screenshot" | "typed" | "prefill"; unsure: boolean; from_last_match: boolean; out: boolean };
-type Unmatched = { name_on_screen: string; team_code: string | null; role: Role | null; credits: number | null; unsure: boolean; suggestions: string[] };
+type Unmatched = { name_on_screen: string; link_name: string; team_code: string | null; role: Role | null; credits: number | null; unsure: boolean; suggestions: string[] };
 
 export function SetupSheet({ match, onClose }: { match: Match; onClose: () => void }) {
   const [step, setStep] = useState<1 | 2>(1);
@@ -49,7 +49,7 @@ export function SetupSheet({ match, onClose }: { match: Match; onClose: () => vo
 
   const confirmLink = async (u: Unmatched, pid: string) => {
     try {
-      await api("/players/link", { method: "POST", body: { player_id: pid, name_on_screen: u.name_on_screen } });
+      await api("/players/link", { method: "POST", body: { player_id: pid, name_on_screen: u.link_name ?? u.name_on_screen } });
       update(pid, { role: u.role, credits: u.credits, via: "screenshot", unsure: u.unsure, out: false });
       setUnmatched((l) => l.filter((x) => x !== u));
     } catch (e: any) { setErr(e.message); }
