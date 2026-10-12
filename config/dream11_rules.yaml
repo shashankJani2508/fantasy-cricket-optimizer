@@ -1,0 +1,41 @@
+# Dream11 team rules per format. FILL every null from the Dream11 app (team-creation screen).
+# The optimizer refuses to run while any value is null.
+# Source of the filled values: docs/components-map.png ("Dream11 rules (settings): 11 players, 100 credits,
+# role limits, max 7 per side, captain 2x, vice-captain 1.5x; verified in the app").
+# Role limits are not in any document yet: copy them from the app ("Pick 1-8 wicket-keepers" style text).
+
+T20:
+  players: 11
+  credit_budget: 100
+  max_per_side: 7
+  captain_multiplier: 2
+  vc_multiplier: 1.5
+  role_limits:
+    WK: {min: null, max: null}
+    BAT: {min: null, max: null}
+    AR: {min: null, max: null}
+    BOWL: {min: null, max: null}
+
+ODI:
+  players: 11
+  credit_budget: 100
+  max_per_side: 7
+  captain_multiplier: 2
+  vc_multiplier: 1.5
+  role_limits:
+    WK: {min: null, max: null}
+    BAT: {min: null, max: null}
+    AR: {min: null, max: null}
+    BOWL: {min: null, max: null}
+
+Test:
+  players: 11
+  credit_budget: 100
+  max_per_side: 7
+  captain_multiplier: 2
+  vc_multiplier: 1.5
+  role_limits:
+    WK: {min: null, max: null}
+    BAT: {min: null, max: null}
+    AR: {min: null, max: null}
+    BOWL: {min: null, max: null}
