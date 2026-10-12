@@ -348,10 +348,16 @@ def _read(s, mid, kind, files):
         if r["player_id"] is None and not twin:
             # not in this match's squad list: look through everyone who has played for that team (unique match only)
             team = codes.get(r.get("team_code"))
-            if team:
-                hist = s.team_players(team, gender)
-                hits = sorted({pid for pid, n in hist if truncated_match(r["name_on_screen"], n)
-                               or initials_match(r["name_on_screen"], n) or surname_initial_match(r["name_on_screen"], n)})
+            # team blank on the screenshot (Preview screens don't print it): search both teams, accept one clear match
+            hits, team_of = set(), {}
+            for t in ([team] if team else list(codes.values())):
+                for pid, n in s.team_players(t, gender):
+                    if truncated_match(r["name_on_screen"], n) or initials_match(r["name_on_screen"], n)                             or surname_initial_match(r["name_on_screen"], n):
+                        hits.add(pid)
+                        team_of[pid] = t
+            hits = sorted(hits)
+            if hits:
+                team = team_of[hits[0]] if len(hits) == 1 else team
                 if len(hits) == 1:
                     r["player_id"] = hits[0]
                     s.add_link(hits[0], "dream11", r["name_on_screen"])
