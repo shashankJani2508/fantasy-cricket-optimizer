@@ -92,7 +92,7 @@ def test_fallback_step2_with_scaling():
     s = base_store()
     s.hist["p"] = [hist_row("2026-01-01", 20, group="ODI_men"), hist_row("2026-01-05", 40, group="ODI_men")]
     s.scaling[("ODI_men", "T20_men")] = 0.5
-    r = fallback(s, None, POINTS, "p", "T20_men")
+    r = fallback(s, None, POINTS, "p", "T20_men", "2026-10-13")
     assert (r.step, r.base_score) == (2, 15.0)
 
 
@@ -101,13 +101,13 @@ def test_fallback_missing_scaling_goes_to_step3_career_stats():
     s.hist["p"] = [hist_row("2026-01-01", 20, group="ODI_men")]
     s.cd_ids["p"] = "52a6be27-1c5d-4c2b-86ab-98710ec7e0ef"
     client = CricketData(s, "k", 95, http_get=lambda url: fixture("players_info"), mode="live")
-    r = fallback(s, client, POINTS, "p", "T20_men")
+    r = fallback(s, client, POINTS, "p", "T20_men", "2026-10-13")
     assert r.step == 3 and r.base_score is not None and "format scaling not available" in r.warnings
 
 
 def test_fallback_nothing_gives_null_no_data():
     s = base_store()
-    r = fallback(s, None, POINTS, "p", "T20_men")
+    r = fallback(s, None, POINTS, "p", "T20_men", "2026-10-13")
     assert (r.step, r.base_score, r.note) == (4, None, "no data")
     res = score_match(s, None, POINTS, "M", ["p"], "pre_toss")
     assert res.players[0].base_score is None and res.players[0].thin_data
@@ -295,3 +295,22 @@ def test_coverage_warning_when_more_than_one_unmatched():
     s.hist["p"] = [hist_row(f"2026-09-{d:02d}", 10) for d in range(1, 12)]
     r = score_match(s, None, POINTS, "M", ["p"], "pre_toss", unmatched_names=["A", "B"], coverage=(20, 22))
     assert "20 of 22 players matched" in r.warnings and any("2 players unmatched" in w for w in r.warnings)
+
+
+# fix-up 2: fallback never sees the match date or later --------------------------
+def test_fallback_step2_ignores_matches_on_or_after_the_match_date():
+    s = base_store()
+    s.hist["p"] = [hist_row("2026-01-01", 20, group="ODI_men"), hist_row("2026-10-13", 500, group="ODI_men"),
+                   hist_row("2026-11-01", 500, group="ODI_men")]
+    s.scaling[("ODI_men", "T20_men")] = 0.5
+    r = fallback(s, None, POINTS, "p", "T20_men", "2026-10-13")
+    assert (r.step, r.base_score) == (2, 10.0)
+
+
+# fix-up 3: placeholder photo means no photo --------------------------------------
+def test_placeholder_image_is_stored_as_none():
+    from engine.sources.cricketdata import PLACEHOLDER_IMG, clean_image_url
+    squad_img = fixture("match_squad")["data"][0]["players"][0]["playerImg"]
+    assert squad_img == PLACEHOLDER_IMG and clean_image_url(squad_img) is None
+    assert clean_image_url("https://g.cricapi.com/iapi/66-637877075103236690.webp") is not None
+    assert clean_image_url(None) is None

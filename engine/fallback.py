@@ -44,11 +44,12 @@ def career_stats_estimate(stats, fmt, points_cfg):
     return (parts, used) if used else (None, used)
 
 
-def fallback(store, client, points_cfg, player_id, format_group):
+def fallback(store, client, points_cfg, player_id, format_group, match_date):
+    """match_date (YYYY-MM-DD): only matches strictly before it are used (same no-peeking rule as factors)."""
     warnings = []
     # step 2: other formats x format_scaling
     by_group = {}
-    for r in store.history(player_id, "9999-12-31"):
+    for r in store.history(player_id, match_date):
         if r["format_group"] != format_group:
             by_group.setdefault(r["format_group"], []).append(r["points"])
     usable = [(g, pts) for g, pts in by_group.items() if store.format_scaling(g, format_group) is not None]

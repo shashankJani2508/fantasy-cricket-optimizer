@@ -108,7 +108,7 @@ def score_match(store, client, points_cfg, match_id, player_ids, run_type, run_i
             other = [r for r in rows if r["format_group"] != group and r["format_group"].endswith("_" + gender)]
             prov = any(r["is_provisional"] for r in rows)
             if len(same) < cold:
-                fb = fallback(store, client, points_cfg, pid, group)
+                fb = fallback(store, client, points_cfg, pid, group, match_date)
                 for w in fb.warnings:
                     if w not in warnings:
                         warnings.append(w)

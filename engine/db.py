@@ -128,6 +128,8 @@ class PgStore:
         return self.one("SELECT cricketdata_id FROM players WHERE id = %s", (pid,))
 
     def set_cricketdata_id(self, pid, cd_id, image_url=None):
+        from engine.sources.cricketdata import clean_image_url
+        image_url = clean_image_url(image_url)   # CricketData.org's generic placeholder means no photo
         self.conn.execute("""UPDATE players SET cricketdata_id = COALESCE(cricketdata_id, %s::text),
                              image_url = COALESCE(image_url, %s::text),
                              image_source = CASE WHEN image_url IS NULL AND %s::text IS NOT NULL THEN 'cricketdata' ELSE image_source END,
