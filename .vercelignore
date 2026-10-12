@@ -1,0 +1,16 @@
+node_modules
+.next
+.env
+.env.*
+data
+output
+tests
+tools
+design
+docs/*.pdf
+*.zip
+*.pdf
+score*.txt
+run.log
+__pycache__
+.pytest_cache
