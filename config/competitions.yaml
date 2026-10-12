@@ -1,0 +1,17 @@
+# Which matches the Upcoming tab shows (13 Oct 2026: Aryan's Dream11 offers internationals and the IPL).
+# Seeded into settings (migration 013). Player history, Cricsheet data, factors and the backtest are never filtered.
+show_international: true
+show_womens_international: true
+show_ipl: true
+show_domestic: false
+# CricketData.org fixtures have no field that marks a match as international (fields seen in
+# tests/fixtures/cricketdata: id, name, matchType, status, venue, date, dateTimeGMT, teams, teamInfo, series_id,
+# fantasyEnabled, bbbEnabled, hasSquad, matchStarted, matchEnded). So: international = both teams in this list
+# (names as stored in Neon, from our data; " Women" is stripped and gender kept separately).
+national_teams: [Afghanistan, Australia, Bahamas, Bahrain, Bangladesh, Bermuda, Bhutan, Botswana, Canada,
+  Cayman Islands, Chile, Costa Rica, England, Ghana, Hong Kong, India, Indonesia, Ireland, Japan, Kenya, Kuwait,
+  Malaysia, Mongolia, Myanmar, Namibia, Nepal, Netherlands, New Zealand, Nigeria, Oman, Pakistan, Qatar, Rwanda,
+  Scotland, Sierra Leone, South Africa, South Korea, Sri Lanka, Thailand, Uganda, United Arab Emirates,
+  United States of America, West Indies, Zimbabwe]
+# IPL by series name. TODO-CONFIRM: no IPL match is in our saved data yet, so the exact series name is unconfirmed.
+ipl_series_contains: ["Indian Premier League", "IPL"]

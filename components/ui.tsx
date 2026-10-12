@@ -72,7 +72,7 @@ export function ErrorNote({ children }: { children: ReactNode }) {
 export function TeamBadge({ name, code, colour, size = 56, country }: { name?: string | null; code?: string | null; colour?: string | null; size?: number; country?: string | null }) {
   const flag = flagOf(country ?? name);
   return (
-    <span className="relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full ring-2 ring-white/20"
+    <span className="relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full ring-[3px] ring-black/80 shadow-[0_6px_20px_rgba(0,0,0,0.6)]"
       style={{ width: size, height: size, background: `radial-gradient(circle at 30% 25%, ${colourOf(colour)}, #0A0B10 130%)` }}>
       {flag ? (
         // eslint-disable-next-line @next/next/no-img-element

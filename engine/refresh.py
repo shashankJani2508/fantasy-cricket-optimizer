@@ -56,7 +56,13 @@ def refresh_fixtures(store, client, days=7, max_series=15):
     end = now + dt.timedelta(days=days)
     current = client.current_matches()
     seen, saved, series = set(), [], []
+    from engine.competitions import classify, load, visible
+    cfg = load()
     for m in current:
+        teams = [base_team(t) for t in m.get("teams", [])] + [None, None]
+        g = gender_of(m.get("teams", []))
+        if not visible(classify(teams[0], teams[1], m.get("name"), g, cfg), g, cfg):
+            continue   # hidden competition: no series lookup (saves CricketData.org calls)
         if m.get("series_id") and m["series_id"] not in series:
             series.append(m["series_id"])
     items = list(current)

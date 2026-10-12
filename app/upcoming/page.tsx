@@ -8,7 +8,7 @@ import { homeArt, matchArt, ring, splitSeries, venueText } from "@/lib/teams";
 import { Chip, countdown, ErrorNote, haptic, localTime, Skeleton, TeamBadge, useAuth, useSnack } from "@/components/ui";
 import { SetupSheet } from "@/components/SetupSheet";
 
-type Card = Match & { rain_chance: number | null; choice: "play" | "skip" | null; stars?: Record<string, Star[]> };
+type Card = Match & { rain_chance: number | null; choice: "play" | "skip" | null; stars?: Record<string, Star[]>; team_ready?: boolean };
 type Deck = { matches: Card[]; next_match: Match | null; stale_since: string | null };
 const code = (t: Match["team_a"]) => t?.code ?? "TBC";
 
@@ -91,12 +91,15 @@ export default function Upcoming() {
             <ul className="max-h-[72vh] space-y-2 overflow-y-auto pr-1">
               {deck.matches.map((m) => (
                 <li key={m.id}>
-                  <button onClick={() => (m.choice === "play" ? location.assign(`/results/${encodeURIComponent(m.id)}`) : setTopId(m.id))}
+                  <button onClick={() => (m.choice === "play" ? location.assign(`/results/${encodeURIComponent(m.id)}`) : m.choice === "skip" ? choose(m, "play") : setTopId(m.id))}
                     className={`flex w-full items-center gap-3 rounded-tile p-3 text-left transition hover:bg-white/10 ${open[0]?.id === m.id ? "bg-white/10" : "bg-surface"}`}>
                     <TeamBadge country={m.team_a?.country} name={m.team_a?.name} code={m.team_a?.code} colour={m.team_a?.colour} size={30} />
                     <div className="min-w-0 flex-1"><div className="truncate text-s14 font-semibold">{splitSeries(m.series).title || `${code(m.team_a)} vs ${code(m.team_b)}`}</div>
                       <div className="text-s12 text-muted">{localTime(m.start_time)}</div></div>
-                    {m.choice === "play" ? <Chip tone="red">Playing</Chip> : m.choice === "skip" ? <Chip tone="muted">Skipped</Chip> : null}
+                    <span className="flex shrink-0 flex-col items-end gap-1">
+                      {m.choice === "play" ? <Chip tone="red" className="!text-s14">Playing</Chip> : m.choice === "skip" ? <Chip tone="muted" className="!text-s14">Skipped</Chip> : null}
+                      {m.team_ready && <Chip tone="green" className="!text-s14">Team ready ✓</Chip>}
+                    </span>
                   </button>
                 </li>
               ))}
@@ -109,14 +112,14 @@ export default function Upcoming() {
               {showSkipped && skipped.map((m) => (
                 <div key={m.id} className="mt-2 flex items-center justify-between rounded-tile bg-surface px-4 py-2 text-s14">
                   <span>{code(m.team_a)} v {code(m.team_b)} · {localTime(m.start_time)}</span>
-                  <button className="min-h-[44px] px-2 font-semibold text-orange" onClick={() => undo(m)}>Restore</button>
+                  <button className="min-h-[44px] px-2 font-semibold text-orange" onClick={() => choose(m, "play")}>Play this match</button>
                 </div>
               ))}
             </div>
           )}
         </>
       )}
-      {setup && <SetupSheet match={setup} onClose={() => setSetup(null)} />}
+      {setup && <SetupSheet match={setup} onClose={(saved?: boolean) => { if (!saved) undo(setup); setSetup(null); }} />}
     </section>
   );
 }
@@ -229,7 +232,7 @@ function Stars({ list, side }: { list: Star[]; side: "left" | "right" }) {
 function Side({ t }: { t: Match["team_a"] }) {
   return (
     <div className="flex flex-col items-center gap-2">
-      <div className="rounded-full p-1" style={{ boxShadow: `0 0 40px ${t?.colour ?? "#3A3F52"}aa` }}><TeamBadge country={t?.country} name={t?.name} code={t?.code} colour={t?.colour} size={84} /></div>
+      <div className="rounded-full p-1"><TeamBadge country={t?.country} name={t?.name} code={t?.code} colour={t?.colour} size={84} /></div>
       <span className="num text-s26 font-bold">{code(t)}</span>
     </div>
   );

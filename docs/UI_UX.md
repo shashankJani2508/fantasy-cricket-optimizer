@@ -96,6 +96,7 @@ Badges on tabs: Results shows a dot when a team is ready, a toss refresh is avai
 └──────────────────────────────┘
 ```
 
+- Only international matches (men's and women's) and the IPL are shown (`config/competitions.yaml`, settings `show_*`); domestic matches are hidden but still count in player history.
 - One fixture card at a time, the next card peeking underneath. Sorted by start time; only matches in the next 7 days (`matches` table, source CricketData.org).
 - Card content: team codes (Big Shoulders, large) with team-colour stripes, format and series, venue and city, local date and time, countdown, rain chance (Open-Meteo), and XI status ("XI not yet" / "XI announced").
 - **Swipe right = Play.** The card tilts and a turf-green "Play" stamp fades in as it moves right; on release past the threshold it flies off and the setup sheet (4.2) opens.

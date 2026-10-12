@@ -12,7 +12,7 @@ type Row = { player_id: string; name: string; team: string; team_code: string; c
   role: Role | null; credits: number | null; via: "screenshot" | "typed" | "prefill"; unsure: boolean; from_last_match: boolean; out: boolean };
 type Unmatched = { name_on_screen: string; link_name: string; team_code: string | null; role: Role | null; credits: number | null; unsure: boolean; suggestions: string[] };
 
-export function SetupSheet({ match, onClose }: { match: Match; onClose: () => void }) {
+export function SetupSheet({ match, onClose }: { match: Match; onClose: (saved?: boolean) => void }) {
   const [step, setStep] = useState<1 | 2>(1);
   const [rows, setRows] = useState<Row[] | null>(null);
   const [budget, setBudget] = useState(0);
@@ -80,7 +80,7 @@ export function SetupSheet({ match, onClose }: { match: Match; onClose: () => vo
   const runType = match.xi_announced ? "post_toss" : "pre_toss";
 
   return (
-    <Sheet open onClose={onClose} title={step === 1 ? "Add credits and roles from Dream11" : "Build my team"}>
+    <Sheet open onClose={() => onClose(step === 2)} title={step === 1 ? "Add credits and roles from Dream11" : "Build my team"}>
       <div className="mb-4 flex items-center gap-2" aria-label={`Step ${step} of 2`}>
         {[1, 2].map((s) => <span key={s} className={`h-1.5 rounded-full ${s === step ? "w-6 bg-red" : "w-1.5 bg-white/25"}`} />)}
         <span className="ml-1 text-s12 text-muted">{step} of 2 · {match.team_a?.code} vs {match.team_b?.code}</span>

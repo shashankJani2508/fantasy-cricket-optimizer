@@ -173,9 +173,18 @@ def upcoming(request: Request):
     now = dt.datetime.now(dt.timezone.utc)
     rows = s.q("""SELECT m.id FROM matches m WHERE m.status = 'upcoming' AND m.start_time BETWEEN %s AND %s
                   ORDER BY m.start_time""", (now, now + dt.timedelta(days=7)))
+    from engine.competitions import classify, load, visible
+    cfg = load()
+    for k in ("show_international", "show_womens_international", "show_ipl", "show_domestic"):
+        v = s.setting(k)
+        if v is not None:
+            cfg[k] = v
     out = []
     for (mid,) in rows:
         m = match_view(s, mid)
+        g = s.one("SELECT gender FROM matches WHERE id = %s", (mid,))
+        if not visible(classify((m["team_a"] or {}).get("name"), (m["team_b"] or {}).get("name"), m["series"], g, cfg), g, cfg):
+            continue
         fc = None
         try:
             fc = forecast_at(s, m["venue_id"], m["venue"], m.pop("_start"), m["city"]) if m["venue_id"] else None
@@ -184,7 +193,9 @@ def upcoming(request: Request):
         ch = s.q("""SELECT choice, chosen_at FROM match_choices WHERE match_id = %s AND NOT undone
                     ORDER BY chosen_at DESC LIMIT 1""", (mid,))
         out.append({**m, "rain_chance": fc["rain_chance_pct"] if fc else None, "choice": ch[0][0] if ch else None,
-                    "stars": stars(s, mid)})
+                    "stars": stars(s, mid),
+                    "team_ready": bool(s.one("""SELECT 1 FROM runs r JOIN teams_picked t ON t.run_id = r.id AND t.kind = 'system'
+                                                WHERE r.match_id = %s AND r.status = 'done' LIMIT 1""", (mid,)))})
     nxt = s.q("SELECT id FROM matches WHERE status = 'upcoming' AND start_time > %s ORDER BY start_time LIMIT 1",
               (now + dt.timedelta(days=7),))
     nm = match_view(s, nxt[0][0]) if nxt else None
