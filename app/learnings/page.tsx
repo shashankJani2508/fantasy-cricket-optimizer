@@ -27,6 +27,7 @@ export default function Learnings() {
   const [err, setErr] = useState<string | null>(null);
   const [group, setGroup] = useState<(typeof GROUPS)[number]>("T20_men");
   const [open, setOpen] = useState<Version | null>(null);
+  const [mode, setMode] = useState<"demo" | "real">("real");
   const load = useCallback(() => api<L>("/learnings").then(setD).catch((e) => setErr(e.message)), []);
   useEffect(() => { load(); }, [load]);
   if (err) return <ErrorNote>Couldn&apos;t load learnings: {err}</ErrorNote>;
@@ -35,13 +36,17 @@ export default function Learnings() {
   const series = d.series.filter((s) => s.format_group === group);
   const bt = d.backtest_mae.find((b) => b.format_group === group);
   const byId = Object.fromEntries(d.versions.map((v) => [v.id, v]));
-  const groups = d.groups.filter((g) => g.format_group === group);
+  const groups = d.groups.filter((g) => g.format_group === group && (g.mode ?? "real") === mode);
+  const inbox = d.inbox.filter((x) => (x.mode ?? "real") === mode);
+  const win = mode === "demo" ? (d as any).demo_window ?? 1 : d.window;
   return (
     <section aria-labelledby="h-l" className="space-y-7">
       <header className="flex items-center justify-between">
         <h1 id="h-l" className="num text-s26 font-bold">Learnings</h1>
         <Link href="/learnings/settings" aria-label="Settings" className="flex h-11 w-11 items-center justify-center rounded-full glass"><Gear size={20} strokeWidth={1.75} /></Link>
       </header>
+      <PillTabs label="Learning mode" value={mode} onChange={setMode}
+        tabs={[{ key: "real", label: "Real · every 5 matches" }, { key: "demo", label: "Demo · every match" }]} />
       <PillTabs label="Format" value={group} onChange={setGroup} tabs={GROUPS.map((g) => ({ key: g, label: label(g) }))} />
 
       <div className="rounded-card bg-surface p-4 shadow-card">
@@ -53,13 +58,13 @@ export default function Learnings() {
           <Fig k="Captain hit rate" v={d.summary.captain_hit_rate == null ? "–" : `${Math.round(d.summary.captain_hit_rate * 100)}%`} />
           <Fig k="Rubric" v={active ? active.version : "–"} sub={active ? (active.approved_at ? `approved ${day(active.approved_at)}` : "from the backtest") : undefined} />
         </dl>
-        {active && !active.points_values_final && <p className="mt-3 text-s12 text-muted">Weights are provisional: Dream11 points values not yet copied from the app.</p>}
+        {active && !active.points_values_final && <p className="mt-3 text-s12 text-muted">Weights come from the backtest on real match data; they are re-fitted once the full Dream11 points table is confirmed.</p>}
       </div>
 
       <div>
         <h2 className="num mb-3 text-s20 font-bold">Waiting for you</h2>
-        {d.inbox.length === 0 ? <p className="rounded-card bg-surface p-5 text-s14 text-muted shadow-card">Nothing to review. The system flags a pattern after {d.window} matches of similar misses.</p>
-          : <div className="no-scrollbar -mx-5 flex snap-x gap-3 overflow-x-auto px-5 pb-2">{d.inbox.map((s) => <Suggestion key={s.id} s={s} versions={d.versions} onDone={load} />)}</div>}
+        {inbox.length === 0 ? <p className="rounded-card bg-surface p-5 text-s14 text-muted shadow-card">Nothing to review. {mode === "demo" ? "Demo mode flags a pattern after every scored match." : `Real mode flags a pattern after ${win} matches of similar misses.`}</p>
+          : <div className="no-scrollbar -mx-5 flex snap-x gap-3 overflow-x-auto px-5 pb-2">{inbox.map((s) => <Suggestion key={s.id} s={s} versions={d.versions} onDone={load} />)}</div>}
       </div>
 
       <div>
@@ -69,7 +74,7 @@ export default function Learnings() {
             {groups.map((g) => (
               <li key={`${g.group_type}:${g.group_value}`} className="flex items-center justify-between gap-2 border-b hairline px-4 py-3 text-s14 last:border-0">
                 <span className="min-w-0 truncate">{GROUP_NAMES[g.group_type]}: <span className="text-muted">{g.group_value.replace("_", " ")}</span></span>
-                {g.status === "flagged" ? <Chip tone="red">Flagged</Chip> : g.window_matches < d.window ? <Chip tone="muted">Watching {g.window_matches}/{d.window}</Chip> : <Chip tone="green">Fine</Chip>}
+                {g.status === "flagged" ? <Chip tone="red">Flagged</Chip> : g.window_matches < win ? <Chip tone="muted">Watching {g.window_matches}/{win}</Chip> : <Chip tone="green">Fine</Chip>}
               </li>
             ))}
           </ul>

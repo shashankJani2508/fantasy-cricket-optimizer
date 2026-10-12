@@ -194,10 +194,11 @@ def _row_group(store, group):
     return row["format_group"] if row else group
 
 
-def update_patterns(store, group):
+def update_patterns(store, group, mode="real"):
     """Recompute patterns for the group's last N counted matches per group value. Returns newly flagged ids."""
     st = Settings(store)
-    window, mult = st.int("flag_window_matches"), st.float("real_miss_mae_multiplier")
+    pre = "demo_" if mode == "demo" else ""
+    window, mult = st.int(pre + "flag_window_matches"), st.float("real_miss_mae_multiplier")
     row = _active_row(store, group)
     if row is None or row["test_mae"] is None:
         return []
@@ -219,18 +220,18 @@ def update_patterns(store, group):
             d["errors"].append(float(adj) - float(act))
     new = []
     for (gt, gv), d in per.items():
-        ev = evaluate(d["errors"], threshold, st.int("flag_min_misses"), st.float("flag_same_direction"))
-        old = store.q("SELECT id, status FROM patterns WHERE format_group = %s AND group_type = %s AND group_value = %s",
-                      (from_any(group), gt, gv))
+        ev = evaluate(d["errors"], threshold, st.int(pre + "flag_min_misses"), st.float("flag_same_direction"))
+        old = store.q("""SELECT id, status FROM patterns WHERE format_group = %s AND group_type = %s AND group_value = %s
+                         AND mode = %s""", (from_any(group), gt, gv, mode))
         status = "flagged" if ev["flagged"] else ("resolved" if old and old[0][1] == "resolved" else "watching")
         pid = store.one("""INSERT INTO patterns (format_group, group_type, group_value, window_matches, real_misses,
-                           same_direction_pct, avg_error, direction, status) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
-                           ON CONFLICT (format_group, group_type, group_value) DO UPDATE SET
+                           same_direction_pct, avg_error, direction, status, mode) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                           ON CONFLICT (format_group, group_type, group_value, mode) DO UPDATE SET
                            window_matches = EXCLUDED.window_matches, real_misses = EXCLUDED.real_misses,
                            same_direction_pct = EXCLUDED.same_direction_pct, avg_error = EXCLUDED.avg_error,
                            direction = EXCLUDED.direction, status = EXCLUDED.status, updated_at = now() RETURNING id""",
                         (from_any(group), gt, gv, len(d["matches"]), ev["real_misses"], ev["same_direction_pct"],
-                         ev["avg_error"], ev["direction"], status))
+                         ev["avg_error"], ev["direction"], status, mode))
         if ev["flagged"] and not (old and old[0][1] == "flagged"):
             new.append(pid)
     return new
@@ -259,8 +260,10 @@ def suggest(store, gemini, pattern_id):
         proposal = {**pr, "weights_before": weights, "weights_after": new_w}
     text = {k: out.get(k) for k in ("pattern", "evidence", "why")}
     return store.one("""INSERT INTO weight_suggestions (kind, pattern_id, format_group, proposal, gemini_text,
-                        history_check, history_mae_before, history_mae_after) VALUES ('weight', %s, %s, %s, %s, %s, %s, %s)
-                        RETURNING id""", (pattern_id, p["format_group"], Jsonb(proposal), Jsonb(text), check, before, after))
+                        history_check, history_mae_before, history_mae_after, mode)
+                        VALUES ('weight', %s, %s, %s, %s, %s, %s, %s, (SELECT mode FROM patterns WHERE id = %s))
+                        RETURNING id""", (pattern_id, p["format_group"], Jsonb(proposal), Jsonb(text), check, before, after,
+                                          pattern_id))
 
 
 def _new_version(store, group, weights, source, approved_by="aryan"):
@@ -369,7 +372,7 @@ def after_results(store, mid, gemini):
     group = store.one("SELECT format_group FROM matches WHERE id = %s", (mid,))
     made = []
     if m and not m["excluded_from_learning"]:
-        flagged = update_patterns(store, group)
+        flagged = update_patterns(store, group, "real") + update_patterns(store, group, "demo")
         pending = [r[0] for r in store.q("""SELECT p.id FROM patterns p WHERE p.status = 'flagged' AND p.format_group = %s
                      AND NOT EXISTS (SELECT 1 FROM weight_suggestions w WHERE w.pattern_id = p.id
                                       AND w.aryan_decision = 'pending')""", (from_any(group),))]

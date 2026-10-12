@@ -721,16 +721,16 @@ def learnings():
         "SELECT format_group, test_mae FROM rubric_versions WHERE is_active ORDER BY format_group")]
     inbox = []
     for r in s.q("""SELECT w.id, w.kind, w.format_group, w.proposal, w.gemini_text, w.history_check, w.history_mae_before,
-                           w.history_mae_after, w.created_at, p.group_type, p.group_value, p.window_matches
+                           w.history_mae_after, w.created_at, p.group_type, p.group_value, p.window_matches, w.mode
                       FROM weight_suggestions w LEFT JOIN patterns p ON p.id = w.pattern_id
                      WHERE w.aryan_decision = 'pending' ORDER BY w.created_at DESC"""):
         inbox.append(dict(zip(("id", "kind", "format_group", "proposal", "gemini_text", "history_check", "mae_before",
-                               "mae_after", "created_at", "group_type", "group_value", "matches"), r)))
+                               "mae_after", "created_at", "group_type", "group_value", "matches", "mode"), r)))
     for x in inbox:
         x["created_at"] = _iso(x["created_at"])
     groups = [dict(zip(("format_group", "group_type", "group_value", "window_matches", "real_misses", "status",
-                        "direction", "avg_error"), r)) for r in s.q(
-        """SELECT format_group, group_type, group_value, window_matches, real_misses, status, direction, avg_error
+                        "direction", "avg_error", "mode"), r)) for r in s.q(
+        """SELECT format_group, group_type, group_value, window_matches, real_misses, status, direction, avg_error, mode
              FROM patterns ORDER BY format_group, group_type, group_value""")]
     versions = [dict(zip(("id", "format_group", "version", "weights", "source", "parent_version_id", "approved_by",
                           "approved_at", "created_at", "is_active", "reliable", "points_values_final"), r)) for r in s.q(
@@ -741,7 +741,7 @@ def learnings():
         v["approved_at"], v["created_at"] = _iso(v["approved_at"]), _iso(v["created_at"])
     return {"series": series, "summary": {"matches_scored": summ[0], "points_roi": summ[1], "captain_hit_rate": summ[2]},
             "backtest_mae": backtest, "inbox": inbox, "groups": groups, "versions": versions,
-            "window": Settings(s).int("flag_window_matches")}
+            "window": Settings(s).int("flag_window_matches"), "demo_window": Settings(s).int("demo_flag_window_matches")}
 
 
 class Decision(BaseModel):

@@ -17,6 +17,8 @@ export function Editor({ run, onSaved }: { run: RunView; onSaved: () => void }) 
   const [swapFor, setSwapFor] = useState<Player | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const sig = (i: string[], c: string, v: string) => [...i].sort().join(",") + "|" + c + "|" + v;
+  const [savedSig, setSavedSig] = useState<string | null>(run.teams.aryan_final ? sig(start.player_ids, start.captain_id, start.vc_id) : null);
   const { ask } = useAuth();
   const snack = useSnack();
   useEffect(() => { setIds(start.player_ids); setCap(start.captain_id); setVc(start.vc_id); }, [start]);
@@ -39,7 +41,7 @@ export function Editor({ run, onSaved }: { run: RunView; onSaved: () => void }) 
     setSaving(true); setErr(null);
     try {
       await api(`/runs/${run.run_id}/final-team`, { method: "PUT", body: { player_ids: ids, captain_id: cap, vc_id: vc, reason: why || null } });
-      haptic(); snack({ text: "Your team is saved." }); onSaved();
+      haptic(); snack({ text: "Your team is saved." }); setSavedSig(sig(ids, cap, vc)); onSaved();
     } catch (e: any) { setErr(e.message); }
     setSaving(false);
   };
@@ -70,7 +72,9 @@ export function Editor({ run, onSaved }: { run: RunView; onSaved: () => void }) 
       {err && <div className="mt-3"><ErrorNote>{err}</ErrorNote></div>}
       {!g.passed && <p className="mt-4 text-center text-s12 text-muted">{g.fails[0]}</p>}
       <div className="mt-3 flex gap-2">
-        <Button className="flex-1" disabled={!g.passed || saving} onClick={save}>{saving ? "Saving…" : "Save my team"}</Button>
+        {savedSig === sig(ids, cap, vc)
+          ? <Button className="flex-1 !bg-red/40 !text-white/90 !shadow-none" disabled>Team saved ✓</Button>
+          : <Button className="flex-1" disabled={!g.passed || saving} onClick={save}>{saving ? "Saving…" : "Save my team"}</Button>}
         <Button kind="quiet" onClick={() => { setIds(sys.player_ids); setCap(sys.captain_id); setVc(sys.vc_id); }}>Reset</Button>
       </div>
 
