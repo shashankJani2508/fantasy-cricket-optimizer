@@ -65,8 +65,8 @@ flowchart TD
 
 Per format group, for each group type (role, batting position band, batting first vs chasing, pitch type/venue) and value:
 
-- Window: the group's last 10 matches.
-- Flag when real misses ≥ 10 **and** ≥ 70% point the same direction.
+- Window: the group's last 5 matches (changed from 10 on 13 Oct 2026; settings `flag_window_matches`, `flag_min_misses`).
+- Flag when real misses ≥ 5 **and** ≥ 70% point the same direction.
 - Status `watching` otherwise; `resolved` after an approved change or a rejection (re-evaluated on new matches).
 
 ---
@@ -79,7 +79,7 @@ Per format group, for each group type (role, batting position band, batting firs
 3. Aryan approves, edits (warning beyond ±0.10) or rejects. Approve/edit creates a new `rubric_versions` row (`approved_change` or `aryan_edit`), set active from the next run.
 
 **Rollback**
-- After a version change, once 10 new matches exist in that group, replay the previous weights on those matches using stored factor values. If the previous version's error is lower, create a `rollback` suggestion. Approval re-activates the previous weights as a new version (`source = rollback`).
+- After a version change, once 5 new matches exist in that group, replay the previous weights on those matches using stored factor values. If the previous version's error is lower, create a `rollback` suggestion. Approval re-activates the previous weights as a new version (`source = rollback`).
 
 **Gemini cap**
 - Over the last 20 matches with adjustments, if Gemini's adjustments mostly made predictions worse (helped = false in the majority), create a `gemini_cap` suggestion to lower `gemini_cap_percent` to 10. Approval updates the setting.

@@ -28,7 +28,7 @@ from engine.sources.openmeteo import forecast_at
 app = FastAPI(title="Fantasy Cricket Match Day Optimizer API")
 _local = threading.local()
 COOKIE = "fc_session"
-MAX_IMAGES, MAX_IMAGE_BYTES = 6, 6 * 1024 * 1024
+MAX_IMAGES, MAX_IMAGE_BYTES = 15, 4 * 1024 * 1024   # the app compresses each screenshot before upload
 RUN_LABELS = {"checking": "Checking who can play", "scoring": "Scoring players",
               "moderating": "Reading today's news and pitch report", "optimizing": "Building the best valid team",
               "explaining": "Writing the reasons"}
@@ -268,6 +268,9 @@ def _read(s, mid, kind, files):
         else:
             merged[k] = r
     out["rows"] = list(merged.values())
+    from engine.matching import initials_match, surname_initial_match
+    gender = s.one("SELECT gender FROM matches WHERE id = %s", (mid,))
+    codes = {t["code"]: t["name"] for t in (m["team_a"], m["team_b"]) if t}
     matcher = Matcher(s)
     by_team = {}
     for p in players:
@@ -286,10 +289,23 @@ def _read(s, mid, kind, files):
             if len(cut) == 1:   # Dream11 cuts long names ("C Wickramas..."); accept only a unique prefix match
                 r["player_id"] = cut[0]
                 s.add_link(cut[0], "dream11", r["name_on_screen"])
+        if r["player_id"] is None and not twin:
+            # not in this match's squad list: look through everyone who has played for that team (unique match only)
+            team = codes.get(r.get("team_code"))
+            if team:
+                hist = s.team_players(team, gender)
+                hits = sorted({pid for pid, n in hist if truncated_match(r["name_on_screen"], n)
+                               or initials_match(r["name_on_screen"], n) or surname_initial_match(r["name_on_screen"], n)})
+                if len(hits) == 1:
+                    r["player_id"] = hits[0]
+                    s.add_link(hits[0], "dream11", r["name_on_screen"])
+                    s.set_xi(mid, team, gender, hits[0], "dream11")
         if r["player_id"] is None:
-            from engine.matching import initials_match, surname_initial_match
-            r["suggestions"] = [pid for pid, n in hint if initials_match(r["name_on_screen"], n)
-                                or surname_initial_match(r["name_on_screen"], n)][:3]
+            r["skip_reason"] = ("two players share this name; left out" if twin else "not in our player data yet; left out")
+    known = {p["player_id"]: p for p in match_players(s, mid)}   # includes players just added from team history
+    for r in out["rows"]:
+        if r.get("player_id"):
+            r["player"] = known.get(r["player_id"])
     return out
 
 

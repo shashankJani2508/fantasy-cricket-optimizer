@@ -2,6 +2,7 @@
 import { Camera } from "lucide-react";
 import { useState } from "react";
 import { api, RunView } from "@/lib/api";
+import { screenshotForm } from "@/lib/images";
 import { Button, ErrorNote, haptic, PlayerAvatar, useAuth, useSnack } from "./ui";
 
 // After the match: Aryan's Dream11 points for his players (screenshot read by Gemini, or typed) and his rank.
@@ -20,8 +21,7 @@ export function ResultsEntry({ run, onSaved }: { run: RunView; onSaved: () => vo
   const upload = async (files: FileList | null) => {
     if (!files?.length || !(await ask())) return;
     setBusy(true); setErr(null);
-    const form = new FormData();
-    Array.from(files).forEach((f) => form.append("files", f));
+    const form = await screenshotForm(files);
     try {
       const r = await api(`/matches/${encodeURIComponent(run.match_id)}/screenshots/points`, { method: "POST", form });
       const v = { ...vals }, u = new Set<string>();

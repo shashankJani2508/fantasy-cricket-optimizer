@@ -180,8 +180,8 @@ Raised when any of these is true: XI not confirmed; rain forecast at the venue; 
 | `probable_xi_days` | 30 |
 | `gemini_cap_percent` | 20 |
 | `real_miss_mae_multiplier` | 1.5 (× the group's backtest test MAE; calibrated in run 2) |
-| `flag_window_matches` / `flag_min_misses` / `flag_same_direction` | 10 / 10 / 0.70 |
+| `flag_window_matches` / `flag_min_misses` / `flag_same_direction` | 5 / 5 / 0.70 (was 10 / 10; changed 13 Oct 2026) |
 | `max_weight_change` | 0.10 |
-| `rollback_window_matches` | 10 |
+| `rollback_window_matches` | 5 |
 | `gemini_trust_window_matches` | 20 |
 | `bench_size` | 4 |

@@ -105,8 +105,8 @@ function MatchView() {
         </>
       )}
 
-      {tab !== "scorecard" && run.warnings.length > 0 && (
-        <Warning><strong className="font-semibold">Check this yourself</strong><ul className="mt-1 space-y-0.5 text-muted">{run.warnings.map((w) => <li key={w}>· {w}</li>)}</ul></Warning>
+      {tab !== "scorecard" && nextSteps(run.warnings).length > 0 && (
+        <Warning><strong className="font-semibold">Your next steps</strong><ul className="mt-1 space-y-0.5 text-muted">{nextSteps(run.warnings).map((w) => <li key={w}>· {w}</li>)}</ul></Warning>
       )}
       {tab !== "scorecard" && (
         <div className="space-y-2">
@@ -125,6 +125,17 @@ function MatchView() {
       <CopySheet open={copy} onClose={() => setCopy(false)} ids={shown.player_ids} cap={shown.captain_id} vc={shown.vc_id} players={run.players} />
     </article>
   );
+}
+
+// Only things Aryan can act on; background notes (provisional weights, scorecard rows used) stay in the run log.
+function nextSteps(warnings: string[]) {
+  const out: string[] = [];
+  for (const w of warnings) {
+    if (w.startsWith("XI not confirmed")) out.push("XI not confirmed: rebuild after the toss");
+    else if (w.startsWith("News not checked")) out.push("News not checked: check team news before you lock your team");
+    else if (w.startsWith("Rain forecast") || w.includes("thin data") || w.startsWith("Gemini wanted")) out.push(w);
+  }
+  return Array.from(new Set(out));
 }
 
 function MatchSetup({ mid, onClose }: { mid: string; onClose: () => void }) {

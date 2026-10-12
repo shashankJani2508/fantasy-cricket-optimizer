@@ -6,6 +6,7 @@ import { api, Match, Role } from "@/lib/api";
 import { ROLES } from "@/lib/gate";
 import { Button, Chip, ErrorNote, haptic, PlayerAvatar, Sheet, Skeleton } from "./ui";
 import { BuildProgress } from "./BuildProgress";
+import { screenshotForm } from "@/lib/images";
 
 type Row = { player_id: string; name: string; team: string; team_code: string; colour: string | null; image_url: string | null;
   role: Role | null; credits: number | null; via: "screenshot" | "typed" | "prefill"; unsure: boolean; from_last_match: boolean; out: boolean };
@@ -32,18 +33,28 @@ export function SetupSheet({ match, onClose }: { match: Match; onClose: () => vo
 
   const update = (id: string, patch: Partial<Row>) => setRows((rs) => rs && rs.map((r) => (r.player_id === id ? { ...r, ...patch } : r)));
   const upload = async (files: FileList | null) => {
-    if (!files?.length) return;
+    if (!files?.length || !rows) return;
     setReading(true); setErr(null);
-    const form = new FormData();
-    Array.from(files).forEach((f) => form.append("files", f));
     try {
-      const r = await api(`/matches/${encodeURIComponent(match.id)}/screenshots/player-list`, { method: "POST", form });
-      const left: Unmatched[] = [];
-      for (const x of r.rows) {
-        if (x.player_id) update(x.player_id, { role: x.role, credits: x.credits, via: "screenshot", unsure: x.unsure, from_last_match: false, out: false });
-        else left.push(x);
-      }
-      setUnmatched(left); setTyping(true);
+      const r = await api(`/matches/${encodeURIComponent(match.id)}/screenshots/player-list`, { method: "POST", form: await screenshotForm(files) });
+      // Everything after the upload is automatic: players not on the screenshots are left out, missing credits come
+      // from the last match, names we can't place are skipped with a note (never a question).
+      const read = new Map<string, any>(r.rows.filter((x: any) => x.player_id).map((x: any) => [x.player_id, x]));
+      const next: Row[] = rows.map((row) => {
+        const x = read.get(row.player_id);
+        if (!x) return { ...row, out: true, unsure: false };
+        const credits = x.credits ?? (row.from_last_match ? row.credits : null);
+        const role = x.role ?? row.role;
+        return { ...row, role, credits, via: "screenshot", unsure: false, from_last_match: x.credits == null && credits != null, out: credits == null || !role };
+      });
+      for (const x of read.values()) if (!rows.some((row) => row.player_id === x.player_id) && x.player && x.credits && x.role)
+        next.push({ ...x.player, role: x.role, credits: x.credits, via: "screenshot", unsure: false, from_last_match: false, out: false });
+      const skipped = r.rows.filter((x: any) => !x.player_id).map((x: any) => `${x.name_on_screen} (${x.skip_reason})`);
+      const noCredits = next.filter((x) => x.out && read.has(x.player_id)).map((x) => `${x.name} (no credits on screenshot)`);
+      setRows(next); setUnmatched([]); setTyping(true);
+      setNote([...skipped, ...noCredits].length ? `Left out automatically: ${[...skipped, ...noCredits].join(", ")}.` : null);
+      const ready = next.filter((x) => !x.out);
+      if (ready.length >= 11 && ready.every((x) => x.role && x.credits)) await saveRows(ready);
     } catch (e: any) { setErr(e.message); }
     setReading(false);
   };
@@ -57,14 +68,15 @@ export function SetupSheet({ match, onClose }: { match: Match; onClose: () => vo
 
   const active = rows?.filter((r) => !r.out) ?? [];
   const complete = active.length >= 11 && active.every((r) => r.role && r.credits != null && r.credits > 0);
-  const save = async () => {
+  const saveRows = async (list: Row[]) => {
     setSaving(true); setErr(null);
     try {
-      await api(`/matches/${encodeURIComponent(match.id)}/credits`, { method: "PUT", body: { rows: active.map((r) => ({ player_id: r.player_id, credits: r.credits, role: r.role, entered_via: r.via })) } });
+      await api(`/matches/${encodeURIComponent(match.id)}/credits`, { method: "PUT", body: { rows: list.map((r) => ({ player_id: r.player_id, credits: r.credits, role: r.role, entered_via: r.via })) } });
       haptic(); setStep(2);
     } catch (e: any) { setErr(e.message); }
     setSaving(false);
   };
+  const save = () => saveRows(active);
   const runType = match.xi_announced ? "post_toss" : "pre_toss";
 
   return (
@@ -79,11 +91,11 @@ export function SetupSheet({ match, onClose }: { match: Match; onClose: () => vo
           <label className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-card border-2 border-dashed border-white/15 bg-surface px-4 py-7 text-center transition hover:border-white/30 ${reading ? "opacity-60" : ""}`}>
             <span className="flex h-12 w-12 items-center justify-center rounded-full bg-surface2"><Camera size={22} strokeWidth={1.75} /></span>
             <span className="font-semibold">{reading ? "Reading your screenshots…" : "Upload Dream11 screenshot"}</span>
-            <span className="text-s12 text-muted">The Preview screen shows credits; add the player list too for roles.</span>
+            <span className="text-s12 text-muted">Add all your Dream11 screenshots at once (up to 15). The Preview screens show credits.</span>
             <input type="file" accept="image/png,image/jpeg,image/webp" multiple className="sr-only" disabled={reading} onChange={(e) => upload(e.target.files)} />
           </label>
           {!typing && <button className="mx-auto block min-h-[44px] text-s14 font-semibold text-muted underline-offset-4 hover:underline" onClick={() => setTyping(true)}>Type instead</button>}
-          {note && <p className="text-s12 text-muted">{note}</p>}
+          {note && <p className="rounded-tile bg-surface px-4 py-3 text-s12 text-muted">{note}</p>}
           {unmatched.map((u) => (
             <div key={u.link_name ?? u.name_on_screen} className="rounded-tile border-l-4 border-amber bg-surface p-4 text-s14">
               <p>We couldn&apos;t match &lsquo;{u.name_on_screen}&rsquo;{u.role ? ` (${u.role})` : ""}. {u.suggestions.length ? "Is this one of these?" : "Who is it?"}</p>

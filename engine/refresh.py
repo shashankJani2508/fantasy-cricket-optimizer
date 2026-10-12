@@ -49,17 +49,26 @@ def upsert_match(store, m):
     return mid
 
 
-def refresh_fixtures(store, client, days=7):
+def refresh_fixtures(store, client, days=7, max_series=15):
+    """This week's fixtures: current matches plus the match list of every series in play. (The general
+    /matches list is not date-ordered: 15,780 rows on 12 Oct 2026, so it can't answer "next 7 days".)"""
     now = dt.datetime.now(dt.timezone.utc)
     end = now + dt.timedelta(days=days)
-    seen, saved = set(), []
-    for m in client.current_matches() + client.matches(0):
+    current = client.current_matches()
+    seen, saved, series = set(), [], []
+    for m in current:
+        if m.get("series_id") and m["series_id"] not in series:
+            series.append(m["series_id"])
+    items = list(current)
+    for sid in series[:max_series]:
+        items += client.series_info(sid).get("matchList") or []
+    for m in items:
         if m["id"] in seen or not m.get("dateTimeGMT"):
             continue
         seen.add(m["id"])
-        t = dt.datetime.fromisoformat(m["dateTimeGMT"]).replace(tzinfo=dt.timezone.utc)
+        t = dt.datetime.fromisoformat(start_gmt(m)).replace(tzinfo=dt.timezone.utc)
         known = store.one("SELECT 1 FROM matches WHERE cricketdata_id = %s", (m["id"],))
-        if (now - dt.timedelta(days=2) <= t <= end) or known:
+        if (now - dt.timedelta(hours=12) <= t <= end) or (known and t >= now - dt.timedelta(days=3)):
             mid = upsert_match(store, m)
             if mid:
                 saved.append(mid)
