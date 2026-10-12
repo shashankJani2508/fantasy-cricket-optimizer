@@ -1,0 +1,32 @@
+{
+ "candidates": [
+  {
+   "content": {
+    "parts": [
+     {
+      "text": "{\"answer\":\"There are 11 players in a cricket team.\",\"n\":11}",
+      "thoughtSignature": "EpIJCo8JAWkUfRNJvAue+gbx7e6Fd2GlA9C5XFSogDKkHjpbDEqNBl/R6RR38ikbnD8pIP8PnIZv0L9OuVG18PXTz43YNdsHeQiCjpWVHkLNmzVMyS+mtOUvnWAeEf73/Yk3jotmBimzcnidHl0A9nYXHdyTXLbsUoAlN9/sGvMHac6akE7Auoq53tBsLzCSEvU7GL4ksG6Gmw6+1LOQ0A9rttRXejNsRGPiiPU2M1mGpL9/2YcdL3QEpVoogAMnD/2aEHE61D0pkoaAxTUbWE0DWr187n8MbnZ4b7inY/BXouV1ARsKvBF1LWBwg0lavwOOYpYHy8QI/BTAaGnk57SQChEg8+oL+9kCkmIGXnrh9Mp1qie8NQlOLC/IDeRt/odBx9Ueq8vJ2tDLlCy08A9qpKCvFVzvyNoRWWY831PWT52aWq10JNTt6cLgMnCrrqA00vMmrt/qc/j7xGUUKaFHeCYzjh/j68H4n0W2lf978VNSnr4JdaT629CHbzuXBLv6k6KvldX3Pr7hxf4zOMPoisu9j82Rxr0mCazvWA7mcZkJd98BBZjiarM++tBqpg9WlB1R2r61NhqXx3fa+ZdCWxgI6VSute0SXiQV5hWNs2kUBimytBoG91K8NH5M4SdHF6as5NLtvZBaG0UDYm8Nmb7snAK8vMwekfjsHzofAGgaTpO5OfU7WF6PDGTZVUb3hfmIeLvvSHo2Z/BNCCkaYlFYSSO3vi0e2cgBRZQrdlxNUzb0PGUxV2oIUy3KMFbDe4yeEawMQoU6JAbbCu68evGW1iOI+4jpWI0uF5xt3eYJvznsHDMgkDgW3mPf0lnwBNcSBJh0v3Z/SRLpKZH+QUY+5YWCvyL8vdKDo6xLUWkQ9iTq/FuIob0lMqdUuUnm42LZtHFDa1xuRCbwxbvt7MhxSwSMKaOhZDmyCT8NwPQRIkhTX0yyjqtMK49YU29ZGhdaRe0ZbUBzpJJU+siTDv3O1EGTOf5OXuRvJuHwkNCTFvhMgV+zkMM/m67F3Zu1DSzyZ72uU4D1KO8OQyxx43VIdTZOOFt9Kk0gnXfhUEjSKEXQyWCVRMjVleTOIWMLAGCvIEFo9Zd0nIcjqGruByxStOfDq5vqUx4jcommXMAndgsQXFd3GxMFjRiOHam0wmfjdradCP4wr4aRQFIKo5PssD577fAF8ARmmdUykgYCMxViqlfoFbeJguiNBJvcS0SCgPQthCgfY99hTSJlzNe+xuvSD2ESKJyB++EwvNNOdqwTIhUgO832VMFz02TdQu7Ql+oh2IJApGgEFlfuOa5guIgs11EUBiM5zbNZcgPZp2Dhi24kziCXhwFnxUFdqrMJsXuNyDdcGE//7WDLvmDlIMn8cynJQ5dmfcyWssJV+oUf3GlDNynJ9Qb41fSc3WqcHAg8f5qOUMULH38IE22pNmACiJ31+HxK+LLtS+zSwxuNwoKHtKobZdpqxsF89LDV+YWATqkiJBYBoWMv9WnE7vOxAeOvSmNgj9Po4VjtRnQsXEtO9sp8Xsj06lpyQlmtiKfXynXFbLMTEGNOd1xL"
+     }
+    ],
+    "role": "model"
+   },
+   "finishReason": "STOP",
+   "index": 0
+  }
+ ],
+ "usageMetadata": {
+  "promptTokenCount": 17,
+  "candidatesTokenCount": 20,
+  "totalTokenCount": 343,
+  "promptTokensDetails": [
+   {
+    "modality": "TEXT",
+    "tokenCount": 17
+   }
+  ],
+  "thoughtsTokenCount": 306,
+  "serviceTier": "standard"
+ },
+ "modelVersion": "gemini-3.6-flash",
+ "responseId": "3cbMaq7hNJbDg8UPgKPBgAY"
+}

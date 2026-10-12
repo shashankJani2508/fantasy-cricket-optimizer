@@ -1,0 +1,32 @@
+{
+ "candidates": [
+  {
+   "content": {
+    "parts": [
+     {
+      "text": "{\"answer\":\"Pakistan defeated Sri Lanka by 82 runs in the second T20I on October 11, 2026, at Rawalpindi to take an unassailable 2-0 series lead.\",\"n\":3} ",
+      "thoughtSignature": "EtcKCtQKAWkUfROuMBEPjBgJIsKX5+zqcQ0m2SWBogFYd5Sml0fwDoDRas2SzQ4FFwPaRa49FfcBi2YFXrl2gqz4lL2gWUI4rVXyy/KVQmUZx2qpjg8ZkGiIPg146XfgIsP/R0fHoDcQh7/D1ZQ/7VaeCnMt0SpxmrdJ8hgxDWy4xmr1DrkfLJLAy+f2gDcTf83jy5jGpg+Yg9vWU8RSXnwakq+gCxsZ6Noqi528LpgPJNTqDG6vdHrcEOyhQzsCflYenRP4yaKVb3crxPVLUtrcY9XQXoPArJbP7EStWxlbFqXjt5y2C8AmUT7MbYuu9a8tg5qd5jUMHrGnWoI2PELQRj1m6MNdqqzWplMMB1skNZqBs8aaZ+NAkDaKMH2+lDFUg15RES/eIiLdLSABl1O7G9DMOnwPSR+FWNK5Tu39f+VtVF1wCWDNPLOS4Z+nXLF3MCKtR0C9StCXnaTTBTx7/ffK677FuYhkOdlPQcPTS2PDEx+zgisWgVMvevvPRMKruSOw9k9r3w6kiHpuWoEqgby6sZgLY8RyyFgc09xZeC9XSx8a3X6et67mxzhB0TGol0MzEMjYdoalTT/NSFQCICabInFYqCarviX2Aof4SYCtefUGLtGaCQPyZW00Gn9SyadWf8EQGiWTrrBl2AxeGvZqNxLouIjOf1XT1lLs9gmBu3cyZql7pU7DOY4V5Xbb7eeotKFt75ofSNsLszxqhNbFAcBVPlitEdm4YDBlETa/COxA5fx/M7RwJb1nu0jSoEiw7IqSB2tlcH2EYPSwhW0psm+MgBCiQLLkNkuNccJqNoIFBTpwnEE4HFUdsUnMdEVs8uvQDpobyYklKadWbBCZhaCqi7Iuuejmaell7+/9ird8DscmRbA6lDGrfzNHFVDdH/mM16+056JzuyUz6MsaMzlrVnibpMa2hsbCwax/t5Eq5uDOML8GffiR/Uqu5x95mtoEAaAxwrF5reXOstwTh49LpEznoUAIxMwwsRLnB1azvhyvVxlgs/3C9mra6Q8bN6GiWBgcFY7n4QlrhDF7JT1b5o1/HFQvf67GcuRLlzwCaxBLjM1sh1yoebKQnOI1GfwexJ4KPXKAwkFpQ4feC9+6tyX6dQik6lVk+vazXlNnr6COcqJnkvHJfUqiZdXrTRpKizKMBdeLPTXNzTFu+k0tI1srLIZypb+KpWWSa4OkkUQTyAhSQkcJ7LYexMKEikpGAnHD6QgsiO8EzTDQeICvTJM6KzhNm/tNVayWE5exYoofHM6YdkNHnZqHMhwpdbEzgml96cA1N7OsQTClPhSmwpRbCydyrJD8Zf08EjhyRQA0F3cDlMkqsj8a1hFHimbfNOkCaNTNiP7zJeT7gmfJj06Z1pLI8qH7KvQOUXuxd7LvFxrUzhnam5aUDXBA2VKxJwZZK/jqHb6F0jlt7/JTFCsniymMhCCUcOphNCcLHzbiFSAxbD0+hwQdhQpFuKWu7xur5N8EXfH00ZAToD50z5btM239ZFMtuTwO+74OIAxZgO2vJcnhIZaRQEV58OiWPUf7cPubIiDGKZQ1nFHcEdDqpRycbuSQz4pPKceNYEjWUAd4HQ9QnmDvEVfgxXtuZ8jkjE3z0uK+LEqwjCOAr1EfLszm6HoqqLhRXifJJjsIM7QjGPOWhLVY+KkIaTjDkoePhV0mjE2SbYxmVXs5ThGDhS6vjfN9I1+eYEeuM4YnOb0emrzkQx8a6Mhwk0G86/TyAklZqwgYhCKEo3LFcLekKRSx+zba2TmlvLBcvtRqXNeCpP5ldseJBQBN5L5T3cXDXLZ7p57Pl+sFcvFPfSQ="
+     }
+    ],
+    "role": "model"
+   },
+   "finishReason": "STOP",
+   "index": 0
+  }
+ ],
+ "usageMetadata": {
+  "promptTokenCount": 283,
+  "candidatesTokenCount": 54,
+  "totalTokenCount": 1006,
+  "promptTokensDetails": [
+   {
+    "modality": "TEXT",
+    "tokenCount": 283
+   }
+  ],
+  "thoughtsTokenCount": 669,
+  "serviceTier": "standard"
+ },
+ "modelVersion": "gemini-3.6-flash",
+ "responseId": "8MbMarj5Dtzeg8UPtoeviQY"
+}

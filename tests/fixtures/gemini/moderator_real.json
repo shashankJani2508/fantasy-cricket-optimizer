@@ -1,0 +1,368 @@
+{
+ "request_players": [
+  {
+   "player_id": "08548b13",
+   "name": "PHKD Mendis",
+   "team": "Sri Lanka",
+   "base_score": 35.4,
+   "factors": {
+    "form": 33.8,
+    "venue": 29.5,
+    "career": 37.3,
+    "opponent": 33.8,
+    "pitch_type": 38.5,
+    "opportunity": 40.1,
+    "current_touch": 23.7,
+    "bat_first_or_chase": 33.8
+   },
+   "thin_data": false
+  },
+  {
+   "player_id": "1777c020",
+   "name": "Fakhar Zaman",
+   "team": "Pakistan",
+   "base_score": 41.0,
+   "factors": {
+    "form": 71.7,
+    "venue": 33.9,
+    "career": 40.3,
+    "opponent": 41.9,
+    "pitch_type": 42.6,
+    "opportunity": 42.9,
+    "current_touch": 71.7,
+    "bat_first_or_chase": 71.7
+   },
+   "thin_data": false
+  },
+  {
+   "player_id": "1aba45cd",
+   "name": "Sahibzada Farhan",
+   "team": "Pakistan",
+   "base_score": 53.0,
+   "factors": {
+    "form": 48.7,
+    "venue": 64.9,
+    "career": 49.9,
+    "opponent": 72.0,
+    "pitch_type": 52.0,
+    "opportunity": 50.7,
+    "current_touch": 48.7,
+    "bat_first_or_chase": 48.7
+   },
+   "thin_data": false
+  },
+  {
+   "player_id": "33609a8c",
+   "name": "Saim Ayub",
+   "team": "Pakistan",
+   "base_score": 53.2,
+   "factors": {
+    "form": 60.2,
+    "venue": 57.8,
+    "career": 52.3,
+    "opponent": 47.5,
+    "pitch_type": 54.8,
+    "opportunity": 65.8,
+    "current_touch": 60.2,
+    "bat_first_or_chase": 60.2
+   },
+   "thin_data": false
+  },
+  {
+   "player_id": "3cf54e77",
+   "name": "Khawaja Nafay",
+   "team": "Pakistan",
+   "base_score": 31.5,
+   "factors": {
+    "form": 26.2,
+    "venue": 29.8,
+    "career": 32.6,
+    "opponent": 23.9,
+    "pitch_type": 26.9,
+    "opportunity": 41.8,
+    "current_touch": 26.2,
+    "bat_first_or_chase": 26.2
+   },
+   "thin_data": false
+  },
+  {
+   "player_id": "3ff033bb",
+   "name": "MD Shanaka",
+   "team": "Sri Lanka",
+   "base_score": 41.1,
+   "factors": {
+    "form": 41.7,
+    "venue": 39.7,
+    "career": 41.1,
+    "opponent": 45.5,
+    "pitch_type": 38.8,
+    "opportunity": 24.4,
+    "current_touch": 41.7,
+    "bat_first_or_chase": 41.7
+   },
+   "thin_data": false
+  },
+  {
+   "player_id": "5750bcb4",
+   "name": "E Malinga",
+   "team": "Sri Lanka",
+   "base_score": 48.0,
+   "factors": {
+    "form": 40.8,
+    "venue": 39.2,
+    "career": 50.3,
+    "opponent": 39.7,
+    "pitch_type": 47.0,
+    "opportunity": 51.7,
+    "current_touch": 45.8,
+    "bat_first_or_chase": 40.8
+   },
+   "thin_data": false
+  },
+  {
+   "player_id": "5d1e7582",
+   "name": "BKG Mendis",
+   "team": "Sri Lanka",
+   "base_score": 46.7,
+   "factors": {
+    "form": 44.8,
+    "venue": 28.2,
+    "career": 49.8,
+    "opponent": 28.9,
+    "pitch_type": 49.7,
+    "opportunity": 50.6,
+    "current_touch": 69.9,
+    "bat_first_or_chase": 44.8
+   },
+   "thin_data": false
+  },
+  {
+   "player_id": "65a2fff5",
+   "name": "Mohammad Imran",
+   "team": "Pakistan",
+   "base_score": 56.0,
+   "factors": {
+    "form": 53.4,
+    "venue": 59.6,
+    "career": 55.3,
+    "opponent": 59.6,
+    "pitch_type": 54.7,
+    "opportunity": 57.8,
+    "current_touch": 53.4,
+    "bat_first_or_chase": 53.4
+   },
+   "thin_data": false
+  },
+  {
+   "player_id": "6d9560f3",
+   "name": "Maaz Sadaqat",
+   "team": "Pakistan",
+   "base_score": 62.3,
+   "factors": {
+    "form": 81.9,
+    "venue": 80.0,
+    "career": 56.3,
+    "opponent": 85.5,
+    "pitch_type": 46.8,
+    "opportunity": 59.1,
+    "current_touch": 81.9,
+    "bat_first_or_chase": 81.9
+   },
+   "thin_data": false
+  },
+  {
+   "player_id": "9c9af282",
+   "name": "Naseem Shah",
+   "team": "Pakistan",
+   "base_score": 46.0,
+   "factors": {
+    "form": 42.7,
+    "venue": 45.5,
+    "career": 46.4,
+    "opponent": 43.6,
+    "pitch_type": 45.9,
+    "opportunity": 47.0,
+    "current_touch": 42.7,
+    "bat_first_or_chase": 42.7
+   },
+   "thin_data": false
+  },
+  {
+   "player_id": "9de62878",
+   "name": "Shadab Khan",
+   "team": "Pakistan",
+   "base_score": 65.9,
+   "factors": {
+    "form": 69.9,
+    "venue": 80.2,
+    "career": 63.4,
+    "opponent": 59.0,
+    "pitch_type": 65.4,
+    "opportunity": 67.5,
+    "current_touch": 69.9,
+    "bat_first_or_chase": 69.9
+   },
+   "thin_data": false
+  },
+  {
+   "player_id": "a5c48ed1",
+   "name": "C Wickramasinghe",
+   "team": "Sri Lanka",
+   "base_score": 35.2,
+   "factors": {
+    "form": 27.2,
+    "venue": 28.1,
+    "career": 37.5,
+    "opponent": 28.1,
+    "pitch_type": 41.0,
+    "opportunity": 31.4,
+    "current_touch": 27.2,
+    "bat_first_or_chase": 27.2
+   },
+   "thin_data": false
+  },
+  {
+   "player_id": "abb7c76c",
+   "name": "Abrar Ahmed",
+   "team": "Pakistan",
+   "base_score": 47.5,
+   "factors": {
+    "form": 26.2,
+    "venue": 49.3,
+    "career": 48.5,
+    "opponent": 48.3,
+    "pitch_type": 50.0,
+    "opportunity": 48.5,
+    "current_touch": 26.2,
+    "bat_first_or_chase": 26.2
+   },
+   "thin_data": false
+  },
+  {
+   "player_id": "c05f9d20",
+   "name": "SSD Arachchige",
+   "team": "Sri Lanka",
+   "base_score": 46.6,
+   "factors": {
+    "form": 56.9,
+    "venue": 47.0,
+    "career": 45.9,
+    "opponent": 47.0,
+    "pitch_type": 34.2,
+    "opportunity": 79.9,
+    "current_touch": 56.9,
+    "bat_first_or_chase": 56.9
+   },
+   "thin_data": false
+  },
+  {
+   "player_id": "dabbd0ae",
+   "name": "B Fernando",
+   "team": "Sri Lanka",
+   "base_score": 46.0,
+   "factors": {
+    "form": 43.9,
+    "venue": 40.5,
+    "career": 47.5,
+    "opponent": 40.5,
+    "pitch_type": 47.5,
+    "opportunity": 47.5,
+    "current_touch": 43.9,
+    "bat_first_or_chase": 43.9
+   },
+   "thin_data": false
+  },
+  {
+   "player_id": "e4bf3570",
+   "name": "Sineth Jayawardena",
+   "team": "Sri Lanka",
+   "base_score": 51.9,
+   "factors": {
+    "form": 50.3,
+    "venue": 48.3,
+    "career": 52.9,
+    "opponent": 48.3,
+    "pitch_type": 72.0,
+    "opportunity": 48.2,
+    "current_touch": 50.3,
+    "bat_first_or_chase": 50.3
+   },
+   "thin_data": false
+  },
+  {
+   "player_id": "ee1b6c27",
+   "name": "N Thushara",
+   "team": "Sri Lanka",
+   "base_score": 40.8,
+   "factors": {
+    "form": 40.9,
+    "venue": 34.6,
+    "career": 42.6,
+    "opponent": 30.4,
+    "pitch_type": 41.7,
+    "opportunity": 43.1,
+    "current_touch": 40.9,
+    "bat_first_or_chase": 40.9
+   },
+   "thin_data": false
+  },
+  {
+   "player_id": "f24c6701",
+   "name": "M Theekshana",
+   "team": "Sri Lanka",
+   "base_score": 43.1,
+   "factors": {
+    "form": 41.1,
+    "venue": 44.7,
+    "career": 43.0,
+    "opponent": 41.7,
+    "pitch_type": 43.1,
+    "opportunity": 43.7,
+    "current_touch": 41.1,
+    "bat_first_or_chase": 41.1
+   },
+   "thin_data": false
+  }
+ ],
+ "forecast": {
+  "hour_utc": "2026-10-13T15:00",
+  "rain_chance_pct": 10,
+  "dew_point_c": 17.5,
+  "humidity_pct": 82,
+  "temperature_c": 20.7
+ },
+ "responses": [
+  {
+   "candidates": [
+    {
+     "content": {
+      "parts": [
+       {
+        "text": "{\n  \"adjustments\": [],\n  \"pitch_note\": \"no news found\",\n  \"news_checked\": true\n} ",
+        "thoughtSignature": "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"
+       }
+      ],
+      "role": "model"
+     },
+     "finishReason": "STOP",
+     "index": 0
+    }
+   ],
+   "usageMetadata": {
+    "promptTokenCount": 3022,
+    "candidatesTokenCount": 31,
+    "totalTokenCount": 3552,
+    "promptTokensDetails": [
+     {
+      "modality": "TEXT",
+      "tokenCount": 3022
+     }
+    ],
+    "thoughtsTokenCount": 499,
+    "serviceTier": "standard"
+   },
+   "modelVersion": "gemini-3.6-flash",
+   "responseId": "MsjMasH5Kezcg8UP5o6W-AE"
+  }
+ ]
+}
