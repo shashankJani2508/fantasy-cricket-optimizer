@@ -1,0 +1,10 @@
+data/
+.env
+run.log
+output/
+__pycache__/
+.pytest_cache/
+*.pyc
+tools/sample/
+tools/survey*.txt
+tools/progress.txt

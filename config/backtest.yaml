@@ -1,0 +1,30 @@
+today: null                 # null = use the real current date; or "YYYY-MM-DD" to pin a run
+window_years: 3
+warmup_months: 6
+thin_data_threshold: 10     # trust = min(n / threshold, 1)
+pitch_min_matches: 5        # earlier matches at a venue needed to classify its pitch
+cold_start_min_matches: 3   # players with fewer earlier matches in the group are excluded
+form_matches: 10
+form_recent_double: 5
+current_touch_days: 30
+current_touch_matches: 5
+fit_fraction: 0.70
+weight_step: 0.05
+real_miss_abs: 15
+real_miss_rel: 0.40
+min_reliable_matches: 100   # groups with fewer evaluated matches are flagged as unreliable
+
+# Cricsheet info.match_type -> format group
+match_type_map:
+  T20: T20
+  IT20: T20
+  ODI: ODI
+  ODM: ODI
+  Test: Test
+  MDM: Test
+
+standard_overs: {T20: 20, ODI: 50}
+# Bowling-band quota: under half / half or more of this many overs.
+# Tests have no quota; the band uses the most overs bowled in one innings vs test_bowling_split.
+bowling_quota: {T20: 4, ODI: 10}
+test_bowling_split: 20

@@ -1,0 +1,5 @@
+pyyaml
+scipy
+numpy
+psycopg[binary]
+pytest

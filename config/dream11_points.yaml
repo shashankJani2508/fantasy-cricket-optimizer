@@ -1,0 +1,138 @@
+# Dream11 fantasy points, one section per format.
+#
+# PROVISIONAL VALUES (base scores, to be updated from the Dream11 app when available).
+# Source, retrieved 2026-10-12 (dream11.com points pages were returning "Server down"):
+#   [D11] Dream11's own static copy of its points page (older version, "NEW" column):
+#         https://d13ir53smqqeyp.cloudfront.net/d11-static-pages/point-system.html
+#   [SK]  Sportskeeda T20 guide (May 2021): https://www.sportskeeda.com/cricket/dream11-points-system
+# Rows not listed by either source are set to 0 and marked "not listed".
+#
+# Format notes:
+#   bands: min <= x < max.  *_mode: "highest" = only the highest milestone/haul counts.
+#   min_balls / min_overs: minimum balls faced / overs bowled for the band to apply.
+
+T20:
+  batting:
+    run: 1                     # [D11]
+    boundary_bonus: 1          # [D11]
+    six_bonus: 2               # [D11]
+    duck: -2                   # [D11]
+    milestone_mode: "highest"  # [D11] "century only gets the century bonus"
+    milestones:
+      - {runs: 50, value: 8}   # [D11]
+      - {runs: 100, value: 16} # [D11]
+    strike_rate:
+      min_balls: 10            # [D11]
+      bands:                   # [D11] penalties only
+        - {min: 0, max: 50, value: -6}
+        - {min: 50, max: 60, value: -4}
+        - {min: 60, max: 70, value: -2}
+  bowling:
+    wicket: 25                 # [D11]
+    lbw_bowled_bonus: 0        # not listed
+    dot_ball: 0                # not listed
+    maiden: 8                  # [D11]
+    haul_mode: "highest"       # assumed, same rule as milestones
+    hauls:
+      - {wickets: 4, value: 8}   # [D11]
+      - {wickets: 5, value: 16}  # [D11]
+    economy:
+      min_overs: 2             # [D11]
+      bands:                   # [D11]
+        - {min: 0, max: 4, value: 6}
+        - {min: 4, max: 5, value: 4}
+        - {min: 5, max: 6.01, value: 2}
+        - {min: 9, max: 10.01, value: -2}
+        - {min: 10.01, max: 11.01, value: -4}
+        - {min: 11.01, max: 1000, value: -6}
+  fielding:
+    catch: 8                   # [D11]
+    catch_haul: {catches: 3, value: 4}   # [SK]
+    stumping: 12               # [D11]
+    run_out_direct: 12         # [D11]
+    run_out_indirect: 6        # [SK]; [D11] splits it 8 thrower / 4 catcher
+  other:
+    playing_xi: 4              # [D11]
+    captain_multiplier: 2      # [D11]
+    vice_captain_multiplier: 1.5   # [D11]
+
+ODI:
+  batting:
+    run: 1
+    boundary_bonus: 1
+    six_bonus: 2
+    duck: -3                   # [D11]
+    milestone_mode: "highest"
+    milestones:
+      - {runs: 50, value: 4}   # [D11]
+      - {runs: 100, value: 8}  # [D11]
+    strike_rate:
+      min_balls: 20            # [D11]
+      bands:
+        - {min: 0, max: 40, value: -6}
+        - {min: 40, max: 50, value: -4}
+        - {min: 50, max: 60, value: -2}
+  bowling:
+    wicket: 25                 # [D11]
+    lbw_bowled_bonus: 0        # not listed
+    dot_ball: 0                # not listed
+    maiden: 4                  # [D11]
+    haul_mode: "highest"
+    hauls:
+      - {wickets: 4, value: 4} # [D11]
+      - {wickets: 5, value: 8} # [D11]
+    economy:
+      min_overs: 5             # [D11]
+      bands:
+        - {min: 0, max: 2.5, value: 6}
+        - {min: 2.5, max: 3.5, value: 4}
+        - {min: 3.5, max: 4.51, value: 2}
+        - {min: 7, max: 8.01, value: -2}
+        - {min: 8.01, max: 9.01, value: -4}
+        - {min: 9.01, max: 1000, value: -6}
+  fielding:
+    catch: 8
+    catch_haul: {catches: 3, value: 4}   # [SK] (T20 value, assumed same)
+    stumping: 12
+    run_out_direct: 12
+    run_out_indirect: 6
+  other:
+    playing_xi: 4
+    captain_multiplier: 2
+    vice_captain_multiplier: 1.5
+
+Test:
+  batting:
+    run: 1
+    boundary_bonus: 1
+    six_bonus: 2
+    duck: -4                   # [D11]
+    milestone_mode: "highest"
+    milestones:
+      - {runs: 50, value: 4}   # [D11]
+      - {runs: 100, value: 8}  # [D11]
+    strike_rate:
+      min_balls: 0
+      bands: []                # [D11] none in Tests
+  bowling:
+    wicket: 16                 # [D11]
+    lbw_bowled_bonus: 0        # not listed
+    dot_ball: 0                # not listed
+    maiden: 0                  # [D11] none in Tests
+    haul_mode: "highest"
+    hauls:
+      - {wickets: 4, value: 4} # [D11]
+      - {wickets: 5, value: 8} # [D11]
+    economy:
+      min_overs: 0
+      bands: []                # [D11] none in Tests
+  fielding:
+    catch: 8
+    catch_haul: {catches: 3, value: 4}   # [SK] (T20 value, assumed same)
+    stumping: 12
+    run_out_direct: 12
+    run_out_indirect: 6
+  other:
+    playing_xi: 4
+    captain_multiplier: 2
+    vice_captain_multiplier: 1.5
