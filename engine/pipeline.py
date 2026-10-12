@@ -262,14 +262,17 @@ def step_explaining(store, rid, run, gemini):
     log(store, "system", "run_done", run["match_id"], {"run_id": rid})
 
 
-def resume(store, rid, client=None, gemini=None, forecast_fn=forecast_at, rules=None):
-    """Run from the step in runs.status to done. On failure: status failed + failed_step + plain-English message."""
+def resume(store, rid, client=None, gemini=None, forecast_fn=forecast_at, rules=None, max_steps=None):
+    """Run from the step in runs.status to done (or max_steps steps). On failure: status failed + failed_step +
+    plain-English message."""
     gemini = gemini or Gemini(store)
+    done_steps = 0
     while True:
         run = _run(store, rid)
         step = run["status"]
-        if step in ("done", "failed"):
+        if step in ("done", "failed") or (max_steps is not None and done_steps >= max_steps):
             return step
+        done_steps += 1
         try:
             if step == "checking":
                 step_checking(store, rid, run)
