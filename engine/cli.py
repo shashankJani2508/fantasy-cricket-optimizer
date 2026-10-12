@@ -21,43 +21,44 @@ from engine.matching import Matcher
 from engine.points import load_points_config
 from engine.score import ScoringFailed, score_match
 from engine.settings import Settings
-from engine.sources.cricketdata import SOURCE, TTL, CricketData
+from engine.sources.cricketdata import (CMD_PREFIX, FIXTURE_INDEX, FIXTURES, FOREVER, SOURCE, TTL,
+                                       CricketData, clean_image_url)
 
-FIX = ROOT / "tests" / "fixtures" / "cricketdata"
-# Saved real responses and the request that produced each (from tools/discover_cricketdata.py).
-SEED = {"match_scorecard.json": ("match_scorecard", {"id": "0cb2b44c-69b3-4c50-b1a5-9af598ffecaf"}),
-        "match_info.json": ("match_info", {"id": "0cb2b44c-69b3-4c50-b1a5-9af598ffecaf"}),
-        "series_info.json": ("series_info", {"id": "a67cb0af-300c-4449-8e80-e006301e5706"}),
-        "players_info.json": ("players_info", {"id": "52a6be27-1c5d-4c2b-86ab-98710ec7e0ef"}),
-        "currentMatches.json": ("currentMatches", {"offset": 0}),
-        "matches.json": ("matches", {"offset": 0})}
-
-
-def client_for(store):
-    return CricketData(store, env("CRICKETDATA_API_KEY"), Settings(store).int("cricketdata_daily_limit"))
+def client_for(store, command=None, dry_run=False):
+    st = Settings(store)
+    return CricketData(store, env("CRICKETDATA_API_KEY"), st.int("cricketdata_daily_limit"),
+                       dev_limit=st.int("cricketdata_dev_daily_limit"),
+                       run_limit=st.int("cricketdata_max_calls_per_run"),
+                       dev=True, command=command, dry_run=dry_run)
 
 
 def cmd_seed(store):
+    """Load the saved real responses into api_cache so they are never fetched again."""
     hits = 0
-    for f, (endpoint, params) in SEED.items():
-        p = FIX / f
+    for (endpoint, items), f in FIXTURE_INDEX.items():
+        params = dict(items)
+        p = FIXTURES / f
         resp = json.loads(p.read_text(encoding="utf8"))
         resp.pop("apikey", None)
         fetched = dt.datetime.fromtimestamp(p.stat().st_mtime, dt.timezone.utc)
-        store.cache_put(SOURCE, CricketData.request_key(endpoint, params), resp, fetched, fetched + TTL[endpoint])
+        finished = isinstance(resp.get("data"), dict) and resp["data"].get("matchEnded")
+        expires = FOREVER if endpoint == "match_scorecard" and finished else fetched + TTL[endpoint]
+        if not store.cache_get(SOURCE, CricketData.request_key(endpoint, params)):
+            store.cache_put(SOURCE, CricketData.request_key(endpoint, params), resp, fetched, expires)
         hits = max(hits, (resp.get("info") or {}).get("hitsToday", 0))
         print(f"cached {endpoint} {params}")
     store.usage_set_at_least(SOURCE, dt.datetime.now(dt.timezone.utc).date(), hits)
     print(f"api_usage today set to at least {hits} (from the saved responses)")
 
 
-def cmd_budget(store):
-    c = client_for(store)
-    print(f"CricketData.org calls today: {c.calls_today()} / {c.daily_limit} (stop limit)")
+def cmd_budget(store, c):
+    print(f"CricketData.org calls today: {c.calls_today()} of {c.daily_limit} "
+          f"(development {c.dev_calls_today()} of {c.dev_limit}; per run max {c.run_limit}; mode {c.mode})")
+    for source, calls in store.usage_by_prefix(CMD_PREFIX, c.now().date()):
+        print(f"  {source[len(CMD_PREFIX):]:20} {calls}")
 
 
-def cmd_upcoming(store):
-    c = client_for(store)
+def cmd_upcoming(store, c):
     now = dt.datetime.now(dt.timezone.utc)
     end = now + dt.timedelta(days=7)
     seen = set()
@@ -68,8 +69,6 @@ def cmd_upcoming(store):
         t = dt.datetime.fromisoformat(m["dateTimeGMT"]).replace(tzinfo=dt.timezone.utc)
         if now <= t <= end:
             print(f"{m['dateTimeGMT']}  {m['id']}  {m.get('matchType')}  {m['name']}")
-    for w in c.warnings:
-        print("warning:", w)
 
 
 def player_list(store, c, info, gender, run_type):
@@ -77,9 +76,11 @@ def player_list(store, c, info, gender, run_type):
     previous finished match of the same series. TODO-CONFIRM: no confirmed-XI endpoint has been verified,
     so post-toss also uses this list."""
     if info.get("hasSquad"):
-        squad = c.match_squad(info["id"])
+        squad = c.match_squad(info["id"], match_finished=bool(info.get("matchEnded")))
         if squad:
-            return [(t["teamName"], p["name"], p["id"]) for t in squad for p in t["players"]], "squad"
+            return [(t["teamName"], p["name"], p["id"], p.get("playerImg")) for t in squad for p in t["players"]], "squad"
+    if not info.get("series_id"):
+        return [], "none"
     prev = [m for m in c.series_info(info["series_id"]).get("matchList", [])
             if m.get("matchEnded") and m.get("date", "") < info["date"] and set(m.get("teams", [])) == set(info["teams"])]
     if not prev:
@@ -87,30 +88,36 @@ def player_list(store, c, info, gender, run_type):
     last = max(prev, key=lambda m: m["dateTimeGMT"])
     sc = c.match_scorecard(last["id"])
     from engine.fresh import scorecard_rows
-    return [(t, n, cid) for (t, n, cid) in scorecard_rows(sc)], f"players from previous match ({last['name']})"
+    return [(t, n, cid, None) for (t, n, cid) in scorecard_rows(sc)], f"players from previous match ({last['name']})"
 
 
-def cmd_score(store, match, run_type):
+def cmd_score(store, c, match, run_type):
     points = load_points_config(ROOT / "config" / "dream11_points.yaml")
-    c = client_for(store)
     info = c.match_info(match)
     if not info:
-        sys.exit(f"Match {match} not found on CricketData.org")
+        if c.dry_run:
+            print("Dry run: match info not cached; a live run would fetch it first.")
+            return
+        sys.exit(f"Match {match} not found (mode {c.mode}): {'; '.join(c.warnings)}")
     fmt = match_format(info.get("matchType"), info.get("name"))
     if fmt is None:
         sys.exit("Format not supported")
     gender = gender_of(info.get("teams", []))
     group = spec_group(fmt, gender)
-    mid = store.ensure_cricketdata_match(info, fmt, gender, group, base_team=base_team)
     plist, source = player_list(store, c, info, gender, run_type)
+    if c.dry_run:
+        print(f"Dry run: player list from {source} ({len(plist)} players); scoring skipped. "
+              "Recent scorecards fetched during scoring are not counted here.")
+        return
+    mid = store.ensure_cricketdata_match(info, fmt, gender, group, base_team=base_team)
     matcher = Matcher(store)
     pids = []
-    for team, name, cd_id in plist:
+    for team, name, cd_id, img in plist:
         pid = matcher.resolve("cricketdata", name, store.team_players(base_team(team), gender))
         if pid:
             store.set_xi(mid, base_team(team), gender, pid, "squad" if source == "squad" else "previous_match")
             if cd_id:
-                store.set_cricketdata_id(pid, cd_id)
+                store.set_cricketdata_id(pid, cd_id, clean_image_url(img))
             pids.append(pid)
     try:
         r = score_match(store, c, points, mid, sorted(set(pids)), run_type, unmatched_names=matcher.unmatched)
@@ -132,11 +139,11 @@ def cmd_score(store, match, run_type):
         print(f"unmatched names (not scored): {', '.join(r.unmatched_names)}")
     for w in r.warnings:
         print("warning:", w)
-    print(f"CricketData.org calls today: {c.calls_today()}")
 
 
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="engine.cli")
+    ap.add_argument("--dry-run", action="store_true", help="print how many live calls would be made; make none")
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("upcoming")
     s = sub.add_parser("score")
@@ -146,18 +153,32 @@ def main(argv=None):
     r.add_argument("--full", action="store_true")
     sub.add_parser("budget")
     sub.add_parser("seed-cache")
+    for p in sub.choices.values():   # accept --dry-run after the command name too
+        p.add_argument("--dry-run", action="store_true", dest="dry_run_cmd", help=argparse.SUPPRESS)
     a = ap.parse_args(argv)
+    dry = a.dry_run or getattr(a, "dry_run_cmd", False)
     store = PgStore()
+    c = client_for(store, command=a.cmd, dry_run=dry)
     if a.cmd == "upcoming":
-        cmd_upcoming(store)
+        cmd_upcoming(store, c)
     elif a.cmd == "score":
-        cmd_score(store, a.match, a.run_type)
+        cmd_score(store, c, a.match, a.run_type)
     elif a.cmd == "refresh-cricsheet":
-        print(refresh(store, load_points_config(ROOT / "config" / "dream11_points.yaml"), full=a.full))
+        if dry:
+            print("Dry run: refresh-cricsheet makes no CricketData.org calls (Cricsheet downloads only).")
+        else:
+            print(refresh(store, load_points_config(ROOT / "config" / "dream11_points.yaml"), full=a.full))
     elif a.cmd == "budget":
-        cmd_budget(store)
+        cmd_budget(store, c)
     elif a.cmd == "seed-cache":
-        cmd_seed(store)
+        if not dry:
+            cmd_seed(store)
+    if a.cmd != "score":
+        for w in c.warnings:
+            print("warning:", w)
+    if dry:
+        print(f"Dry run: would make {c.would_call} live CricketData.org calls (cache misses, mode {c.mode}).")
+    print(c.summary())
 
 
 if __name__ == "__main__":

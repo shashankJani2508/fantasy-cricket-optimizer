@@ -100,7 +100,7 @@ def test_fallback_missing_scaling_goes_to_step3_career_stats():
     s = base_store()
     s.hist["p"] = [hist_row("2026-01-01", 20, group="ODI_men")]
     s.cd_ids["p"] = "52a6be27-1c5d-4c2b-86ab-98710ec7e0ef"
-    client = CricketData(s, "k", 95, http_get=lambda url: fixture("players_info"))
+    client = CricketData(s, "k", 95, http_get=lambda url: fixture("players_info"), mode="live")
     r = fallback(s, client, POINTS, "p", "T20_men")
     assert r.step == 3 and r.base_score is not None and "format scaling not available" in r.warnings
 
@@ -158,7 +158,7 @@ def test_scorecard_row_created_once_then_replaced_by_cricsheet():
     series = fixture("series_info")
     s.teams[("Pakistan", "male")] = [("farhan", "Sahibzada Farhan")]
     client = CricketData(s, "k", 95, now=lambda: dt.datetime(2026, 10, 12, tzinfo=dt.timezone.utc),
-                         http_get=lambda url: series if "series_info" in url else fixture("match_scorecard"))
+                         http_get=lambda url: series if "series_info" in url else fixture("match_scorecard"), mode="live")
     for _ in range(2):
         fill_recent(s, client, POINTS, ["farhan"], "2026-10-13", sc["series_id"])
     rows = [r for k, r in s.points.items() if k[0] == "farhan"]
@@ -185,5 +185,73 @@ def test_budget_limit_makes_no_live_call_and_sets_stale():
                 now - dt.timedelta(hours=2), now - dt.timedelta(hours=1))   # expired copy
     s.usage_add("cricketdata", now.date(), 95)
     calls = []
-    c = CricketData(s, "k", 95, now=lambda: now, http_get=lambda url: calls.append(url))
+    c = CricketData(s, "k", 95, now=lambda: now, http_get=lambda url: calls.append(url), mode="live")
     assert c.match_info("x") == {"id": "x"} and calls == [] and c.data_stale
+
+
+# fix-up 5: data modes and caps -----------------------------------------------
+def _live(s, **kw):
+    calls = []
+    now = dt.datetime(2026, 10, 12, 12, tzinfo=dt.timezone.utc)
+    resp = {"status": "success", "data": {"id": "x"}, "info": {"hitsUsed": 1}}
+    c = CricketData(s, "k", kw.pop("daily", 95), now=lambda: now, mode="live",
+                    http_get=lambda url: calls.append(url) or resp, **kw)
+    return c, calls, now
+
+
+def test_offline_mode_never_calls_and_uses_fixtures():
+    s = MemoryStore()
+    c = CricketData(s, "k", 95, http_get=lambda url: pytest.fail("offline mode made a call"))
+    assert c.mode == "offline"
+    assert c.match_scorecard("0cb2b44c-69b3-4c50-b1a5-9af598ffecaf")["id"] == "0cb2b44c-69b3-4c50-b1a5-9af598ffecaf"
+    assert c.match_info("unknown-id") == {} and c.data_stale and c.calls_this_run == 0
+
+
+def test_cache_only_uses_expired_cache_and_never_fixtures():
+    s = MemoryStore()
+    now = dt.datetime(2026, 10, 12, tzinfo=dt.timezone.utc)
+    s.cache_put("cricketdata", CricketData.request_key("match_info", {"id": "x"}), {"data": {"id": "x"}},
+                now - dt.timedelta(days=2), now - dt.timedelta(days=1))
+    c = CricketData(s, "k", 95, now=lambda: now, mode="cache_only", http_get=lambda url: pytest.fail("call"))
+    assert c.match_info("x") == {"id": "x"} and c.data_stale
+    assert c.match_scorecard("0cb2b44c-69b3-4c50-b1a5-9af598ffecaf") == {}
+
+
+def test_dev_limit_and_per_run_limit_stop_live_calls():
+    s = MemoryStore()
+    c, calls, now = _live(s, dev_limit=2, run_limit=10)
+    for i in range(4):
+        c.match_info(f"m{i}")
+    assert len(calls) == 2 and s.usage_get("cricketdata_dev", now.date()) == 2 and c.data_stale
+    s2 = MemoryStore()
+    c2, calls2, _ = _live(s2, dev_limit=30, run_limit=3)
+    for i in range(5):
+        c2.match_info(f"m{i}")
+    assert len(calls2) == 3 and c2.calls_this_run == 3
+
+
+def test_dry_run_counts_misses_without_calling():
+    s = MemoryStore()
+    c, calls, _ = _live(s, dry_run=True)
+    c.match_info("a"); c.match_scorecard("b")
+    assert calls == [] and c.would_call == 11
+
+
+def test_finished_scorecard_cached_permanently_and_fetched_once():
+    s = MemoryStore()
+    now = dt.datetime(2026, 10, 12, tzinfo=dt.timezone.utc)
+    sc = fixture("match_scorecard")
+    calls = []
+    c = CricketData(s, "k", 95, now=lambda: now, mode="live", http_get=lambda url: calls.append(url) or dict(sc))
+    c.match_scorecard(sc["data"]["id"])
+    later = CricketData(s, "k", 95, now=lambda: now + dt.timedelta(days=400), mode="live",
+                        http_get=lambda url: calls.append(url) or dict(sc))
+    later.match_scorecard(sc["data"]["id"])
+    assert len(calls) == 1
+
+
+def test_tests_cannot_reach_the_network():
+    import urllib.request
+    from tests.conftest import NetworkBlocked
+    with pytest.raises(NetworkBlocked):
+        urllib.request.urlopen("https://api.cricapi.com/v1/matches")

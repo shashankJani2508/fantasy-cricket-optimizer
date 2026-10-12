@@ -218,6 +218,10 @@ class PgStore:
                              ON CONFLICT (source, date) DO UPDATE SET calls = api_usage.calls + EXCLUDED.calls""",
                           (source, date, n))
 
+    def usage_by_prefix(self, prefix, date):
+        return self.q("SELECT source, calls FROM api_usage WHERE source LIKE %s AND date = %s ORDER BY source",
+                      (prefix + "%", date))
+
     def usage_set_at_least(self, source, date, n):
         self.conn.execute("""INSERT INTO api_usage (source, date, calls) VALUES (%s, %s, %s)
                              ON CONFLICT (source, date) DO UPDATE SET calls = GREATEST(api_usage.calls, EXCLUDED.calls)""",

@@ -8,3 +8,6 @@ __pycache__/
 tools/sample/
 tools/survey*.txt
 tools/progress.txt
+score*.txt
+scoring_engine.zip
+data/register/
