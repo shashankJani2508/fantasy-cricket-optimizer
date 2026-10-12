@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
-import { ErrorNote, pts, Skeleton } from "./ui";
+import { Chip, ErrorNote, pts, Skeleton, Warning } from "./ui";
 
 type SC = {
   system_points: number | null; aryan_points: number | null; simple_points: number | null; perfect_points: number | null;
@@ -16,47 +16,46 @@ export function Scorecard({ matchId }: { matchId: string }) {
   const [err, setErr] = useState<string | null>(null);
   useEffect(() => { api<SC>(`/matches/${encodeURIComponent(matchId)}/scorecard`).then(setSc).catch((e) => setErr(e.message)); }, [matchId]);
   if (err) return <ErrorNote>{err}</ErrorNote>;
-  if (!sc) return <Skeleton className="mt-6 h-64" />;
-  const max = Math.max(1, ...sc.predicted_vs_actual.flatMap((r) => [r.predicted ?? 0, r.actual ?? 0]));
+  if (!sc) return <Skeleton className="h-72 !rounded-card" />;
   const Big = ({ label, v }: { label: string; v: number | null }) => (
-    <div className="flex-1 rounded-sheet bg-pavilion p-3 text-sightscreen"><div className="text-s12 opacity-80">{label}</div><div className="num text-s40 leading-none">{pts(v, 0)}</div></div>
+    <div className="flex-1 rounded-tile bg-surface2 p-3 text-center"><div className="num text-s26 font-extrabold leading-none">{pts(v, 0)}</div><div className="mt-1 text-[11px] text-muted">{label}</div></div>
   );
   return (
-    <section className="mt-6 space-y-4" aria-labelledby="h-sc">
-      <h2 id="h-sc" className="num text-s28">Scorecard</h2>
-      {!sc.points_final && <p className="rounded-sheet bg-clay/50 p-3 text-s14">Approximate until full match data arrives (usually a few days).</p>}
-      {sc.mismatches > 0 && <p className="rounded-sheet bg-floodlight/25 p-3 text-s14">⚠ Our calculation differs for {sc.mismatches} players. Check the points table in Settings.</p>}
-      <div className="flex gap-2"><Big label="System's team" v={sc.system_points} /><Big label="Your final team" v={sc.aryan_points} /><Big label="Simple team" v={sc.simple_points} /></div>
-      <div className="grid gap-3 sm:grid-cols-3">
-        <div className="rounded-sheet bg-surface p-3"><div className="text-s12 text-slate">Points ROI (system − simple)</div>
-          <div className={`num text-s28 ${sc.points_roi == null ? "" : sc.points_roi >= 0 ? "text-turf" : "text-ball"}`}>{sc.points_roi == null ? "–" : `${sc.points_roi >= 0 ? "▲ +" : "▼ "}${pts(sc.points_roi, 0)}`}</div></div>
-        <div className="rounded-sheet bg-surface p-3"><div className="text-s12 text-slate">Efficiency (system ÷ perfect {pts(sc.perfect_points, 0)})</div>
-          <div className="num text-s28">{sc.efficiency == null ? "–" : `${Math.round(sc.efficiency * 100)}%`}</div>
-          {sc.efficiency != null && <div className="h-1.5 rounded-full bg-slate/15"><div className="h-1.5 rounded-full bg-turf" style={{ width: `${Math.min(100, sc.efficiency * 100)}%` }} /></div>}</div>
-        <div className="rounded-sheet bg-surface p-3"><div className="text-s12 text-slate">Captain hit</div>
-          <div className="text-s16">{sc.captain_rank ? `Captain ${sc.captain_name ?? ""} was ${ord(sc.captain_rank)} top scorer` : "Captain's points not available"}</div></div>
+    <section className="space-y-4" aria-label="Scorecard">
+      {!sc.points_final && <p className="rounded-tile bg-surface px-4 py-3 text-s12 text-muted">Approximate until full match data arrives (usually a few days).</p>}
+      {sc.mismatches > 0 && <Warning>Our calculation differs for {sc.mismatches} players. Check the points table in Settings.</Warning>}
+      <div className="rounded-card bg-surface p-4 shadow-card">
+        <div className="flex gap-2"><Big label="System" v={sc.system_points} /><Big label="Your team" v={sc.aryan_points} /><Big label="Simple team" v={sc.simple_points} /></div>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {sc.points_roi != null && <Chip tone={sc.points_roi >= 0 ? "green" : "red"}>{sc.points_roi >= 0 ? "▲ +" : "▼ "}{pts(sc.points_roi, 0)} points ROI</Chip>}
+          {sc.efficiency != null && <Chip tone="glass">{Math.round(sc.efficiency * 100)}% of perfect ({pts(sc.perfect_points, 0)})</Chip>}
+          <Chip tone="gold">{sc.captain_rank ? `Captain ${ord(sc.captain_rank)} top scorer` : "Captain's points n/a"}</Chip>
+        </div>
+      </div>
+      <div className="overflow-hidden rounded-card bg-surface shadow-card">
+        <div className="grid grid-cols-[1fr_52px_52px_52px] gap-1 px-4 pb-2 pt-4 text-[11px] font-semibold text-muted">
+          <span>Player</span><span className="text-right">Pred</span><span className="text-right">Actual</span><span className="text-right">Diff</span>
+        </div>
+        {sc.predicted_vs_actual.map((r) => {
+          const d = r.actual != null && r.predicted != null ? r.actual - r.predicted : null;
+          return (
+            <div key={r.player_id} className="grid grid-cols-[1fr_52px_52px_52px] items-center gap-1 border-t hairline px-4 py-2.5 text-s14">
+              <span className="truncate">{r.name}{r.real_miss && <span className="ml-2 rounded-full bg-red/15 px-2 text-[11px] font-semibold text-red">Real miss</span>}</span>
+              <span className="num text-right text-muted">{pts(r.predicted, 0)}</span>
+              <span className="num text-right font-bold">{pts(r.actual, 0)}</span>
+              <span className={`num text-right font-bold ${d == null ? "" : d >= 0 ? "text-green" : "text-red"}`}>{d == null ? "–" : `${d >= 0 ? "+" : ""}${pts(d, 0)}`}</span>
+            </div>
+          );
+        })}
       </div>
       {sc.swaps.length > 0 && (
-        <div><h3 className="font-semibold">Your swaps</h3>
+        <div className="rounded-card bg-surface p-4 shadow-card"><h3 className="mb-2 font-semibold">Your swaps</h3>
           {sc.swaps.map((s, i) => {
             const d = (s.in_points ?? 0) - (s.out_points ?? 0);
-            return <p key={i} className="text-s14">You swapped {s.out} for {s.in}: {s.in} scored {pts(Math.abs(d), 0)} {d >= 0 ? "more" : "fewer"}.</p>;
-          })}</div>
+            return <p key={i} className="text-s14 text-muted">You swapped {s.out} for {s.in}: <span className={d >= 0 ? "text-green" : "text-red"}>{s.in} scored {pts(Math.abs(d), 0)} {d >= 0 ? "more" : "fewer"}</span>.</p>;
+          })}
+        </div>
       )}
-      <div>
-        <h3 className="font-semibold">Predicted vs actual</h3>
-        <p className="text-s12 text-slate"><span className="inline-block h-2 w-3 bg-clay" /> predicted <span className="ml-2 inline-block h-2 w-3 bg-turf" /> actual</p>
-        <ul className="mt-2 space-y-2">
-          {sc.predicted_vs_actual.map((r) => (
-            <li key={r.player_id} className="text-s14">
-              <div className="flex justify-between"><span>{r.name}{r.real_miss && <span className="ml-2 rounded-full bg-ball px-2 text-s12 text-white">Real miss</span>}</span>
-                <span className="num text-s16">{pts(r.predicted, 0)} → {pts(r.actual, 0)}</span></div>
-              <div className="h-1.5 rounded-full bg-clay" style={{ width: `${(Math.max(0, r.predicted ?? 0) / max) * 100}%` }} />
-              <div className="mt-0.5 h-1.5 rounded-full bg-turf" style={{ width: `${(Math.max(0, r.actual ?? 0) / max) * 100}%` }} />
-            </li>
-          ))}
-        </ul>
-      </div>
     </section>
   );
 }

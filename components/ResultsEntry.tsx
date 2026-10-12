@@ -1,4 +1,5 @@
 "use client";
+import { Camera } from "lucide-react";
 import { useState } from "react";
 import { api, RunView } from "@/lib/api";
 import { Button, ErrorNote, haptic, PlayerAvatar, useAuth, useSnack } from "./ui";
@@ -49,32 +50,33 @@ export function ResultsEntry({ run, onSaved }: { run: RunView; onSaved: () => vo
     setBusy(false);
   };
   return (
-    <section className="mt-6 rounded-sheet bg-surface p-4" aria-labelledby="h-res">
-      <h2 id="h-res" className="num text-s28">Enter results</h2>
-      <label className={`mt-3 inline-flex min-h-[44px] cursor-pointer items-center rounded-full bg-turf px-5 font-semibold text-white ${busy ? "opacity-50" : ""}`}>
-        {busy ? "Working…" : "Upload Dream11 points screenshot"}
+    <section className="space-y-4" aria-labelledby="h-res">
+      <h2 id="h-res" className="num text-s20 font-bold">Enter results</h2>
+      <label className={`flex cursor-pointer flex-col items-center gap-2 rounded-card border-2 border-dashed border-white/15 bg-surface px-4 py-6 text-center ${busy ? "opacity-60" : ""}`}>
+        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-surface2"><Camera size={22} strokeWidth={1.75} /></span>
+        <span className="font-semibold">{busy ? "Working…" : "Upload Dream11 points screenshot"}</span>
+        <span className="text-s12 text-muted">or type the points below</span>
         <input type="file" accept="image/png,image/jpeg,image/webp" multiple className="sr-only" disabled={busy} onChange={(e) => upload(e.target.files)} />
       </label>
-      <span className="ml-3 text-s14 text-slate">or type them below</span>
-      {note && <p className="mt-2 text-s12 text-slate">{note}</p>}
-      <ul className="mt-3 divide-y divide-slate/20">
+      {note && <p className="text-s12 text-muted">{note}</p>}
+      <ul className="space-y-2">
         {team.map((pid) => {
           const p = run.players[pid];
           return (
-            <li key={pid} className={`flex items-center gap-3 py-2 ${unsure.has(pid) ? "bg-floodlight/25" : ""}`}>
-              <PlayerAvatar name={p.name} url={p.image_url} colour={p.colour} size={32} />
-              <span className="flex-1">{p.name}{unsure.has(pid) && <span className="text-s12"> · Check this</span>}</span>
-              <input aria-label={`Points for ${p.name}`} inputMode="decimal" value={vals[pid] ?? ""} onChange={(e) => { setVals({ ...vals, [pid]: e.target.value }); setVia("typed"); }}
-                className="num min-h-[44px] w-20 rounded-input border border-fg/10 bg-app px-2 text-s16" />
+            <li key={pid} className={`flex items-center gap-3 rounded-tile bg-surface p-2.5 pr-3 ${unsure.has(pid) ? "border-l-4 border-amber" : ""}`}>
+              <PlayerAvatar name={p.name} url={p.image_url} colour={p.colour} size={36} />
+              <span className="min-w-0 flex-1 truncate text-s14 font-semibold">{p.name}{unsure.has(pid) && <span className="font-normal text-amber"> · Check this</span>}</span>
+              <input aria-label={`Points for ${p.name}`} inputMode="decimal" value={vals[pid] ?? ""} placeholder="Pts" onChange={(e) => { setVals({ ...vals, [pid]: e.target.value }); setVia("typed"); }}
+                className="num min-h-[40px] w-16 rounded-input bg-surface2 px-2 text-right text-s16 font-bold placeholder:text-muted/60" />
             </li>
           );
         })}
       </ul>
-      <label className="mt-3 flex items-center gap-3 text-s14">Your rank (optional)
-        <input inputMode="numeric" value={rank} onChange={(e) => setRank(e.target.value.replace(/\D/g, ""))} className="num min-h-[44px] w-28 rounded-input border border-fg/10 bg-app px-2 text-s16" />
+      <label className="flex items-center justify-between gap-3 rounded-tile bg-surface p-3 text-s14">Your rank (optional)
+        <input inputMode="numeric" value={rank} onChange={(e) => setRank(e.target.value.replace(/\D/g, ""))} className="num min-h-[40px] w-28 rounded-input bg-surface2 px-2 text-right text-s16 font-bold" />
       </label>
-      {err && <div className="mt-3"><ErrorNote>{err}</ErrorNote></div>}
-      <Button className="mt-4 w-full" disabled={!complete || busy} onClick={save}>Save results</Button>
+      {err && <ErrorNote>{err}</ErrorNote>}
+      <Button className="w-full" disabled={!complete || busy} onClick={save}>Save results</Button>
     </section>
   );
 }
