@@ -84,6 +84,16 @@ class PgStore:
                         "points": pts, "is_provisional": prov})
         return out
 
+    def dot_rate(self, pid, group, before, min_balls):
+        """The player's exact dot-ball share from Cricsheet rows before `before`, or None if he has bowled
+        fewer than min_balls legal balls in this format group."""
+        balls, dots = self.q("""SELECT COALESCE(sum(p.balls_bowled), 0), COALESCE(sum(p.dot_balls), 0)
+                                FROM player_match_points p JOIN matches m ON m.id = p.match_id
+                                WHERE p.player_id = %s AND p.format_group = %s AND p.source = 'cricsheet'
+                                  AND p.balls_bowled IS NOT NULL AND m.start_time::date < %s::date""",
+                             (pid, group, before))[0]
+        return dots / balls if balls >= min_balls else None
+
     def first_innings(self, group, before):
         return self.q("""SELECT m.start_time::date::text, v.name, m.first_innings_total FROM matches m
                          JOIN venues v ON v.id = m.venue_id
@@ -208,7 +218,8 @@ class PgStore:
     def upsert_points(self, r):
         cols = ["player_id", "match_id", "format_group", "batting_points", "bowling_points", "fielding_points",
                 "total_points", "batting_position", "overs_bowled", "bowling_band", "retired_hurt", "source",
-                "is_provisional"]
+                "is_provisional", "balls_bowled", "dot_balls", "dot_balls_estimated"]
+        r = {"balls_bowled": None, "dot_balls": None, "dot_balls_estimated": False, **r}
         upd = ", ".join(f"{c} = EXCLUDED.{c}" for c in cols[2:])
         got = self.conn.execute(f"""
             INSERT INTO player_match_points ({', '.join(cols)}) VALUES ({', '.join(['%s'] * len(cols))})

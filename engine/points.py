@@ -124,7 +124,7 @@ def _balls_from_overs(o):
     return whole * 6 + int(round((o - whole) * 10))
 
 
-def from_scorecard(scorecard_row, fmt, cfg):
+def from_scorecard(scorecard_row, fmt, cfg, dot_rate=None):
     """Provisional Dream11 points for one player from a CricketData.org scorecard
     (match_scorecard response; fields confirmed in tests/fixtures/cricketdata/match_scorecard.json).
 
@@ -136,7 +136,9 @@ def from_scorecard(scorecard_row, fmt, cfg):
     economy, catches, stumpings, LBW/bowled bonus (counted from batters' `dismissal` values),
     playing XI (only for players who appear in the scorecard).
     NOT supported by scorecards (point type skipped):
-      - dot balls (no ball-by-ball data)
+      - dot balls (no ball-by-ball data). If dot_rate (the bowler's own past share of dot balls among
+        his legal balls, from Cricsheet) is given, dots are estimated as round(balls bowled x dot_rate);
+        otherwise 0. Either way the row is provisional and replaced by exact Cricsheet points.
       - run out direct vs not direct: `runout` is a single count; scored at the not-direct value
         (TODO-CONFIRM)
       - playing-XI points for players who neither batted, bowled nor fielded (not listed)
@@ -148,6 +150,9 @@ def from_scorecard(scorecard_row, fmt, cfg):
             "out": i.get("dismissal") is not None} for i in scorecard_row.get("bat", [])]
     bowl = [{"balls": _balls_from_overs(i["o"]), "runs": i["r"], "dots": 0, "maidens": i["m"],
              "wickets": i["w"], "lbw_bowled": 0} for i in scorecard_row.get("bowl", [])]
+    if dot_rate is not None:
+        for b in bowl:
+            b["dots"] = int(round(b["balls"] * dot_rate))
     if bowl:
         bowl[0]["lbw_bowled"] = scorecard_row.get("lbw_bowled", 0)
     c = scorecard_row.get("catching", {})

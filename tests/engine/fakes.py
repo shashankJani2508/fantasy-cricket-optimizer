@@ -7,7 +7,7 @@ FIX = Path(__file__).resolve().parent.parent / "fixtures" / "cricketdata"
 
 SETTINGS = {"form_window": 10, "form_recent_double": 5, "current_touch_matches": 5, "current_touch_days": 30,
             "thin_data_full_trust": 10, "cold_start_min_matches": 3, "pitch_type_min_matches": 5,
-            "thin_data_trust_threshold": 0.5, "cricketdata_daily_limit": 95}
+            "thin_data_trust_threshold": 0.5, "cricketdata_daily_limit": 95, "dot_rate_min_balls": 60}
 
 
 def fixture(name):
@@ -28,6 +28,7 @@ class MemoryStore:
         self.xi = {}              # (match_id, pid) -> team
         self.cd_ids = {}
         self.scaling = {}
+        self.dots = {}            # (pid, group) -> (past balls, past dots)
         self.debut = {}
         self.cache, self.usage = {}, {}
         self.runs, self.preds = {}, []
@@ -38,6 +39,9 @@ class MemoryStore:
     def match(self, mid): return self.matches.get(mid)
     def history(self, pid, before):
         return sorted([r for r in self.hist.get(pid, []) if r["date"] < before], key=lambda r: r["date"])
+    def dot_rate(self, pid, group, before, min_balls):
+        b, d = self.dots.get((pid, group), (0, 0))
+        return d / b if b >= min_balls else None
     def first_innings(self, group, before): return [(d, v, t) for g, d, v, t in self.fi if g == group and d < before]
     def team_players(self, team, gender, since=None):
         return self.recent.get((team, gender), []) if since else self.teams.get((team, gender), [])

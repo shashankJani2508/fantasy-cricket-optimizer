@@ -87,7 +87,8 @@ def score_match(store, client, points_cfg, match_id, player_ids, run_type, run_i
 
         step = "fill recent"
         if client is not None:
-            warnings += fill_recent(store, client, points_cfg, player_ids, match_date, m.get("series_id"))
+            warnings += fill_recent(store, client, points_cfg, player_ids, match_date, m.get("series_id"),
+                                    dot_min_balls=settings.int("dot_rate_min_balls"))
 
         step = "score players"
         book = VenueBook(cfg["pitch_min_matches"])

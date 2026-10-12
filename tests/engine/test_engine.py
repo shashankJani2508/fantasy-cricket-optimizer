@@ -314,3 +314,27 @@ def test_placeholder_image_is_stored_as_none():
     assert squad_img == PLACEHOLDER_IMG and clean_image_url(squad_img) is None
     assert clean_image_url("https://g.cricapi.com/iapi/66-637877075103236690.webp") is not None
     assert clean_image_url(None) is None
+
+
+# dot balls on provisional scorecard rows ---------------------------------------------
+def test_scorecard_dots_estimated_from_own_rate_only_when_given():
+    import copy
+    cfg = copy.deepcopy(POINTS)
+    cfg["T20"]["bowling"]["dot_ball"] = 1          # test value only, to make dots visible
+    row = {"bowl": [{"o": 4, "m": 0, "r": 30, "w": 1}], "bat": [], "catching": {}}
+    without = from_scorecard(row, "T20", cfg)
+    with_rate = from_scorecard(row, "T20", cfg, dot_rate=0.375)     # 24 balls x 0.375 = 9 dots
+    assert with_rate["bowling"] - without["bowling"] == 9
+
+
+def test_fill_recent_uses_bowlers_past_dot_rate():
+    s = MemoryStore()
+    sc = fixture("match_scorecard")["data"]
+    bowler = sc["scorecard"][0]["bowling"][0]["bowler"]["name"]     # a Sri Lanka bowler in the 2nd T20I
+    s.teams[("Sri Lanka", "male")] = [("b1", bowler)]
+    s.dots[("b1", "T20_men")] = (600, 240)                           # 40% dot balls in the past
+    client = CricketData(s, "k", 95, now=lambda: dt.datetime(2026, 10, 12, tzinfo=dt.timezone.utc), mode="live",
+                         http_get=lambda url: fixture("series_info") if "series_info" in url else fixture("match_scorecard"))
+    fill_recent(s, client, POINTS, ["b1"], "2026-10-13", sc["series_id"])
+    row = s.points[("b1", "cd:" + sc["id"])]
+    assert row["dot_balls_estimated"] and row["dot_balls"] == round(row["balls_bowled"] * 0.4)

@@ -62,7 +62,7 @@ def scorecard_rows(scorecard):
     return rows
 
 
-def fill_recent(store, client, points_cfg, player_ids, match_date, series_id, days=30):
+def fill_recent(store, client, points_cfg, player_ids, match_date, series_id, days=30, dot_min_balls=60):
     """Upsert provisional (source='scorecard') points for finished matches of this series in the last
     `days` days before match_date. Never overwrites a cricsheet row. Returns a list of notes."""
     notes = []
@@ -91,7 +91,10 @@ def fill_recent(store, client, points_cfg, player_ids, match_date, series_id, da
             pid = matcher.resolve("cricketdata", name, store.team_players(base_team(team), gender))
             if pid is None or pid not in wanted:
                 continue
-            pts = from_scorecard(row, fmt, points_cfg)
+            balls = sum(int(b["o"]) * 6 + int(round((b["o"] - int(b["o"])) * 10)) for b in row["bowl"])
+            rate = store.dot_rate(pid, group, m.get("date", match_date), dot_min_balls) if balls else None
+            pts = from_scorecard(row, fmt, points_cfg, dot_rate=rate)
+            dots = int(round(balls * rate)) if rate is not None else None
             overs = sum(int(b["o"]) + (b["o"] - int(b["o"])) * 10 / 6 for b in row["bowl"])
             pos = row["bat"][0]["position"] if row["bat"] else None
             store.set_xi(mid, base_team(team), gender, pid, "scorecard")
@@ -100,6 +103,7 @@ def fill_recent(store, client, points_cfg, player_ids, match_date, series_id, da
                                     "fielding_points": pts["fielding"], "total_points": pts["total"],
                                     "batting_position": pos, "overs_bowled": round(overs, 2),
                                     "bowling_band": None, "retired_hurt": False,
+                                    "balls_bowled": balls, "dot_balls": dots, "dot_balls_estimated": dots is not None,
                                     "source": "scorecard", "is_provisional": True}):
                 added += 1
         notes.append(f"{m['name']}: {added} provisional scorecard rows")

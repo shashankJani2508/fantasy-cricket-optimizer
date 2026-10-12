@@ -73,9 +73,11 @@ def refresh(store, points_cfg, full=False):
             prows[pid] = (pid, pm.name, g, pid)
             xrows.append((m.match_id, team_id(pm.team, g), pid, "cricsheet"))
             p = player_points(pm.stats, m.fmt, points_cfg)
-            overs = sum(i["balls"] for i in pm.stats["bowl"]) / 6
+            balls = sum(i["balls"] for i in pm.stats["bowl"])
+            dots = sum(i["dots"] for i in pm.stats["bowl"])
             pts.append((pid, m.match_id, group, p["batting"], p["bowling"], p["fielding"], p["total"],
-                        pm.bat_position, round(overs, 2), pm.bowl_band, False, "cricsheet", False))
+                        pm.bat_position, round(balls / 6, 2), pm.bowl_band, False, "cricsheet", False,
+                        balls, dots, False))
     c = store.conn
     with c.transaction():
         _copy_upsert(c, "teams", ["id", "name", "gender", "cricsheet_name"], list(teams.values()), "id", [])
@@ -90,7 +92,8 @@ def refresh(store, points_cfg, full=False):
         _copy_upsert(c, "player_match_points",
                      ["player_id", "match_id", "format_group", "batting_points", "bowling_points", "fielding_points",
                       "total_points", "batting_position", "overs_bowled", "bowling_band", "retired_hurt", "source",
-                      "is_provisional"], pts, "player_id, match_id",
+                      "is_provisional", "balls_bowled", "dot_balls", "dot_balls_estimated"], pts, "player_id, match_id",
                      ["format_group", "batting_points", "bowling_points", "fielding_points", "total_points",
-                      "batting_position", "overs_bowled", "bowling_band", "source", "is_provisional"])
+                      "batting_position", "overs_bowled", "bowling_band", "source", "is_provisional",
+                      "balls_bowled", "dot_balls", "dot_balls_estimated"])
     return {"matches": len(mrows), "points_rows": len(pts), "excluded": dict(excluded)}
