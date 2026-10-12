@@ -194,9 +194,16 @@ class Gemini:
                                    "published": str(n["published_at"]), "link": n["link"]} for n in news]
         items = {n["id"]: n for n in news or []}
         start = match.get("start_time_utc")
-        return self.call("moderator", json.dumps(body, default=str),
-                         lambda d: check_moderator(d, {p["player_id"] for p in players}, cap, items, start),
-                         search=True, run_id=run_id, summary=f"moderate {match.get('id')} {len(players)} players")
+        check = lambda d: check_moderator(d, {p["player_id"] for p in players}, cap, items, start)
+        try:
+            return self.call("moderator", json.dumps(body, default=str), check, search=True, run_id=run_id,
+                             summary=f"moderate {match.get('id')} {len(players)} players")
+        except GeminiFailed as e:
+            if "429" not in str(e) or not items:
+                raise
+            # search quota used up: still read the RSS items (search-cited adjustments are then impossible)
+            return self.call("moderator", json.dumps(body, default=str), check, search=False, run_id=run_id,
+                             summary=f"moderate {match.get('id')} RSS only (search quota exceeded)")
 
     # Job 2
     def explain(self, payload, run_id=None):
