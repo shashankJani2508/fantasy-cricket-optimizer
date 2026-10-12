@@ -55,6 +55,8 @@ def refresh_fixtures(store, client, days=7, max_series=15):
     now = dt.datetime.now(dt.timezone.utc)
     end = now + dt.timedelta(days=days)
     current = client.current_matches()
+    if len(current) >= 25:   # the list is paged 25 at a time (info.totalRows was 32 on 12 Oct 2026)
+        current += client.get("currentMatches", offset=25) or []
     seen, saved, series = set(), [], []
     from engine.competitions import classify, load, visible
     cfg = load()
