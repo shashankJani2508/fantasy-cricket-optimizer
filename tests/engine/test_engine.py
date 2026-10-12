@@ -338,3 +338,12 @@ def test_fill_recent_uses_bowlers_past_dot_rate():
     fill_recent(s, client, POINTS, ["b1"], "2026-10-13", sc["series_id"])
     row = s.points[("b1", "cd:" + sc["id"])]
     assert row["dot_balls_estimated"] and row["dot_balls"] == round(row["balls_bowled"] * 0.4)
+
+
+def test_dot_ball_every_n_and_default_per_ball():
+    from engine.points import bowling_points
+    base = {"wicket": 0, "lbw_bowled_bonus": 0, "maiden": 0, "haul_mode": "highest", "hauls": [],
+            "economy": {"min_overs": 99, "bands": []}, "dot_ball": 1}
+    inn = [{"balls": 24, "runs": 30, "dots": 10, "maidens": 0, "wickets": 0, "lbw_bowled": 0}]
+    assert bowling_points(inn, base) == 10                         # per dot ball (T20)
+    assert bowling_points(inn, {**base, "dot_ball_every": 3}) == 3  # 1 per 3 dot balls (ODI): 10 // 3

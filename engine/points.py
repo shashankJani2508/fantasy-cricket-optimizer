@@ -88,7 +88,8 @@ def bowling_points(innings, c):
     pts = 0.0
     for inn in innings:
         pts += inn["wickets"] * c["wicket"] + inn["lbw_bowled"] * c["lbw_bowled_bonus"]
-        pts += inn["dots"] * c["dot_ball"] + inn["maidens"] * c["maiden"]
+        # optional dot_ball_every (e.g. 3 = "dot_ball points per 3 dot balls"); absent = per dot ball
+        pts += (inn["dots"] // c.get("dot_ball_every", 1)) * c["dot_ball"] + inn["maidens"] * c["maiden"]
         pts += _threshold_bonus(inn["wickets"], c["hauls"], "wickets", c["haul_mode"])
         eco = c["economy"]
         overs = inn["balls"] / 6.0

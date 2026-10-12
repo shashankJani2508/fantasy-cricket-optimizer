@@ -5,6 +5,7 @@
 #   [D11] Dream11's own static copy of its points page (older version, "NEW" column):
 #         https://d13ir53smqqeyp.cloudfront.net/d11-static-pages/point-system.html
 #   [SK]  Sportskeeda T20 guide (May 2021): https://www.sportskeeda.com/cricket/dream11-points-system
+#   [WEB] dot balls: web search results quoting dream11.com's points page (unreachable when checked)
 # Rows not listed by either source are set to 0 and marked "not listed".
 #
 # Format notes:
@@ -30,7 +31,7 @@ T20:
   bowling:
     wicket: 25                 # [D11]
     lbw_bowled_bonus: 0        # not listed
-    dot_ball: 0                # not listed
+    dot_ball: 1                # [WEB] search results citing dream11.com (12 Oct 2026); page itself unreachable, UNVERIFIED
     maiden: 8                  # [D11]
     haul_mode: "highest"       # assumed, same rule as milestones
     hauls:
@@ -75,7 +76,8 @@ ODI:
   bowling:
     wicket: 25                 # [D11]
     lbw_bowled_bonus: 0        # not listed
-    dot_ball: 0                # not listed
+    dot_ball: 1                # [WEB] search results citing dream11.com (12 Oct 2026); page itself unreachable, UNVERIFIED: 1 point per 3 dot balls
+    dot_ball_every: 3
     maiden: 4                  # [D11]
     haul_mode: "highest"
     hauls:
@@ -117,7 +119,7 @@ Test:
   bowling:
     wicket: 16                 # [D11]
     lbw_bowled_bonus: 0        # not listed
-    dot_ball: 0                # not listed
+    dot_ball: 0                # no confirmed Test value found (TODO-CONFIRM from the Dream11 app)
     maiden: 0                  # [D11] none in Tests
     haul_mode: "highest"
     hauls:
