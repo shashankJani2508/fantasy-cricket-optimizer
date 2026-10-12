@@ -52,7 +52,8 @@ export function SetupSheet({ match, onClose }: { match: Match; onClose: (saved?:
       const skipped = r.rows.filter((x: any) => !x.player_id).map((x: any) => `${x.name_on_screen} (${x.skip_reason})`);
       const noCredits = next.filter((x) => x.out && read.has(x.player_id)).map((x) => `${x.name} (no credits on screenshot)`);
       setRows(next); setUnmatched([]); setTyping(true);
-      setNote([...skipped, ...noCredits].length ? `Left out automatically: ${[...skipped, ...noCredits].join(", ")}.` : null);
+      setNote([...skipped, ...noCredits].length ? [...skipped, ...noCredits].join("
+") : null);
     } catch (e: any) { setErr(e.message); }
     setReading(false);
   };
@@ -93,7 +94,14 @@ export function SetupSheet({ match, onClose }: { match: Match; onClose: (saved?:
             <input type="file" accept="image/png,image/jpeg,image/webp" multiple className="sr-only" disabled={reading} onChange={(e) => upload(e.target.files)} />
           </label>
           {!typing && <button className="mx-auto block min-h-[44px] text-s14 font-semibold text-muted underline-offset-4 hover:underline" onClick={() => setTyping(true)}>Type instead</button>}
-          {note && <p className="rounded-tile bg-surface px-4 py-3 text-s12 text-muted">{note}</p>}
+          {note && (
+            <div className="rounded-tile bg-surface px-4 py-3 text-s12 text-muted">
+              <p className="mb-1 font-semibold text-ink">Left out automatically ({note.split("
+").length})</p>
+              <ul className="max-h-40 space-y-0.5 overflow-y-auto">{note.split("
+").map((l, i) => <li key={i}>• {l.replace("; left out", "")}</li>)}</ul>
+            </div>
+          )}
           {unmatched.map((u) => (
             <div key={u.link_name ?? u.name_on_screen} className="rounded-tile border-l-4 border-amber bg-surface p-4 text-s14">
               <p>We couldn&apos;t match &lsquo;{u.name_on_screen}&rsquo;{u.role ? ` (${u.role})` : ""}. {u.suggestions.length ? "Is this one of these?" : "Who is it?"}</p>
