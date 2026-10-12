@@ -255,3 +255,43 @@ def test_tests_cannot_reach_the_network():
     from tests.conftest import NetworkBlocked
     with pytest.raises(NetworkBlocked):
         urllib.request.urlopen("https://api.cricapi.com/v1/matches")
+
+
+# fix-up 1: name matching coverage ---------------------------------------------
+from engine.matching import CoverageMatcher, Register, surname_initial_match
+
+SL = [("shanaka", "MD Shanaka"), ("kusal", "BKG Mendis"), ("kamindu", "PHKD Mendis"), ("theek", "M Theekshana")]
+
+
+def test_surname_plus_initial_dasun_shanaka():
+    assert surname_initial_match("Dasun Shanaka", "MD Shanaka")
+    assert not surname_initial_match("Dasun Shanaka", "MD Mendis")
+    m = CoverageMatcher(MemoryStore())
+    assert m.resolve("cricketdata", "Dasun Shanaka", SL, SL) == "shanaka"
+
+
+def test_kusal_and_kamindu_mendis_ambiguous_without_register():
+    m = CoverageMatcher(MemoryStore())
+    assert m.resolve("cricketdata", "Kusal Mendis", SL, SL) is None      # BKG and PHKD both contain 'k'
+    assert m.resolve("cricketdata", "Kamindu Mendis", SL, SL) is None
+    assert m.unmatched == ["Kusal Mendis", "Kamindu Mendis"]
+
+
+def test_register_resolves_kusal_then_rules_him_out_for_kamindu():
+    reg = Register({"kusal mendis": {"kusal"}})          # names.csv: 5d1e7582 = "Kusal Mendis"
+    m = CoverageMatcher(MemoryStore(), reg)
+    got = m.resolve_all("cricketdata", [(1, "Kamindu Mendis", SL, SL), (2, "Kusal Mendis", SL, SL)])
+    assert got == {1: "kamindu", 2: "kusal"} and m.unmatched == []
+
+
+def test_register_hit_outside_the_team_is_not_used():
+    reg = Register({"dasun shanaka": {"someone-else"}})
+    m = CoverageMatcher(MemoryStore(), reg)
+    assert m.resolve("cricketdata", "Dasun Shanaka", SL, SL) == "shanaka"    # falls through to step b
+
+
+def test_coverage_warning_when_more_than_one_unmatched():
+    s = base_store()
+    s.hist["p"] = [hist_row(f"2026-09-{d:02d}", 10) for d in range(1, 12)]
+    r = score_match(s, None, POINTS, "M", ["p"], "pre_toss", unmatched_names=["A", "B"], coverage=(20, 22))
+    assert "20 of 22 players matched" in r.warnings and any("2 players unmatched" in w for w in r.warnings)

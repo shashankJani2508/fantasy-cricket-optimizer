@@ -7,6 +7,7 @@
     python -m engine.cli seed-cache      # load the saved real responses (tests/fixtures) into api_cache
 """
 import argparse
+import urllib.request
 import datetime as dt
 import json
 import sys
@@ -17,7 +18,7 @@ from engine.env import ROOT, env
 from engine.factors import FACTORS
 from engine.fresh import base_team, gender_of, match_format
 from engine.groups import spec_group
-from engine.matching import Matcher
+from engine.matching import CoverageMatcher, Register
 from engine.points import load_points_config
 from engine.score import ScoringFailed, score_match
 from engine.settings import Settings
@@ -110,17 +111,30 @@ def cmd_score(store, c, match, run_type):
               "Recent scorecards fetched during scoring are not counted here.")
         return
     mid = store.ensure_cricketdata_match(info, fmt, gender, group, base_team=base_team)
-    matcher = Matcher(store)
+    register = Register.from_dir(ROOT / "data" / "register")
+    if register is None:
+        print("note: Cricsheet register not downloaded (python -m engine.cli refresh-register); register step skipped")
+    matcher = CoverageMatcher(store, register)
+    since = (dt.date.fromisoformat(info["date"]) - dt.timedelta(days=365)).isoformat()
+    hints = {}
+    items = []
+    for i, (team, name, cd_id, img) in enumerate(plist):
+        t = base_team(team)
+        if t not in hints:
+            hints[t] = (store.team_players(t, gender), store.team_players(t, gender, since=since))
+        items.append((i, name, hints[t][0], hints[t][1]))
+    resolved = matcher.resolve_all("cricketdata", items)
     pids = []
-    for team, name, cd_id, img in plist:
-        pid = matcher.resolve("cricketdata", name, store.team_players(base_team(team), gender))
+    for i, (team, name, cd_id, img) in enumerate(plist):
+        pid = resolved.get(i)
         if pid:
             store.set_xi(mid, base_team(team), gender, pid, "squad" if source == "squad" else "previous_match")
             if cd_id:
                 store.set_cricketdata_id(pid, cd_id, clean_image_url(img))
             pids.append(pid)
     try:
-        r = score_match(store, c, points, mid, sorted(set(pids)), run_type, unmatched_names=matcher.unmatched)
+        r = score_match(store, c, points, mid, sorted(set(pids)), run_type, unmatched_names=matcher.unmatched,
+                        coverage=(len(pids), len(plist)))
     except ScoringFailed as e:
         sys.exit(f"Scoring failed at step '{e.step}': {e} (run {e.run_id})")
     print(f"{info['name']}  [{group}, {run_type}]  player list: {source}")
@@ -152,6 +166,11 @@ def main(argv=None):
     r = sub.add_parser("refresh-cricsheet")
     r.add_argument("--full", action="store_true")
     sub.add_parser("budget")
+    lk = sub.add_parser("link", help="confirm a player name match once")
+    lk.add_argument("--source", required=True, choices=["dream11", "cricketdata", "cricsheet"])
+    lk.add_argument("--name", required=True)
+    lk.add_argument("--player", required=True, help="players.id (Cricsheet register identifier)")
+    sub.add_parser("refresh-register", help="download the Cricsheet people register (names.csv, people.csv)")
     sub.add_parser("seed-cache")
     for p in sub.choices.values():   # accept --dry-run after the command name too
         p.add_argument("--dry-run", action="store_true", dest="dry_run_cmd", help=argparse.SUPPRESS)
@@ -170,6 +189,21 @@ def main(argv=None):
             print(refresh(store, load_points_config(ROOT / "config" / "dream11_points.yaml"), full=a.full))
     elif a.cmd == "budget":
         cmd_budget(store, c)
+    elif a.cmd == "link":
+        if not store.player_exists(a.player):
+            sys.exit(f"No player with id {a.player}")
+        if not dry:
+            store.add_link(a.player, a.source, a.name, confirmed=True)
+            print(f"Linked {a.source} name '{a.name}' to {store.full_name(a.player)} ({a.player})")
+    elif a.cmd == "refresh-register":
+        if dry:
+            print("Dry run: refresh-register downloads 2 files from cricsheet.org (no CricketData.org calls).")
+        else:
+            folder = ROOT / "data" / "register"
+            folder.mkdir(parents=True, exist_ok=True)
+            for f in ("people.csv", "names.csv"):
+                urllib.request.urlretrieve(f"https://cricsheet.org/register/{f}", folder / f)
+                print(f"downloaded {f}")
     elif a.cmd == "seed-cache":
         if not dry:
             cmd_seed(store)

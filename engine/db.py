@@ -90,9 +90,15 @@ class PgStore:
                          WHERE m.format_group = %s AND m.first_innings_total IS NOT NULL
                            AND m.start_time::date < %s::date ORDER BY 1""", (group, before))
 
-    def team_players(self, team, gender):
+    def team_players(self, team, gender, since=None):
+        """Players who appeared for this team; with `since` (YYYY-MM-DD) only matches on or after it."""
+        if since is None:
+            return self.q("""SELECT DISTINCT p.id, p.full_name FROM match_xi x JOIN players p ON p.id = x.player_id
+                             WHERE x.team_id = %s ORDER BY 1""", (team_id(team, gender),))
         return self.q("""SELECT DISTINCT p.id, p.full_name FROM match_xi x JOIN players p ON p.id = x.player_id
-                         WHERE x.team_id = %s""", (team_id(team, gender),))
+                         JOIN matches m ON m.id = x.match_id
+                         WHERE x.team_id = %s AND m.start_time::date >= %s::date ORDER BY 1""",
+                      (team_id(team, gender), since))
 
     def player_team(self, mid, pid):
         return self.one("""SELECT t.name FROM match_xi x JOIN teams t ON t.id = x.team_id
@@ -103,9 +109,20 @@ class PgStore:
         return [r[0] for r in self.q("SELECT player_id FROM player_name_links WHERE source = %s AND source_name = %s",
                                      (source, name))]
 
-    def add_link(self, pid, source, name):
-        self.conn.execute("""INSERT INTO player_name_links (player_id, source, source_name) VALUES (%s, %s, %s)
-                             ON CONFLICT DO NOTHING""", (pid, source, name))
+    def add_link(self, pid, source, name, confirmed=False):
+        self.conn.execute("""INSERT INTO player_name_links (player_id, source, source_name, confirmed_by_aryan, confirmed_at)
+                             VALUES (%s, %s, %s, %s, CASE WHEN %s THEN now() END)
+                             ON CONFLICT (source, source_name, player_id) DO UPDATE
+                             SET confirmed_by_aryan = player_name_links.confirmed_by_aryan OR EXCLUDED.confirmed_by_aryan,
+                                 confirmed_at = COALESCE(player_name_links.confirmed_at, EXCLUDED.confirmed_at)""",
+                          (pid, source, name, confirmed, confirmed))
+
+    def links_for_player(self, pid, source):
+        return [r[0] for r in self.q("SELECT source_name FROM player_name_links WHERE player_id = %s AND source = %s",
+                                     (pid, source))]
+
+    def player_exists(self, pid):
+        return self.one("SELECT 1 FROM players WHERE id = %s", (pid,)) is not None
 
     def player_cricketdata_id(self, pid):
         return self.one("SELECT cricketdata_id FROM players WHERE id = %s", (pid,))

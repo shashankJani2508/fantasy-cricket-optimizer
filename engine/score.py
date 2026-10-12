@@ -50,7 +50,8 @@ def _records(rows):
                    r["bat_band"], r["bowl_band"], float(r["points"])) for r in rows]
 
 
-def score_match(store, client, points_cfg, match_id, player_ids, run_type, run_id=None, unmatched_names=None):
+def score_match(store, client, points_cfg, match_id, player_ids, run_type, run_id=None, unmatched_names=None,
+                coverage=None):
     if run_type not in ("pre_toss", "post_toss"):
         raise ValueError("run_type must be pre_toss or post_toss")
     step = "load match"
@@ -77,6 +78,12 @@ def score_match(store, client, points_cfg, match_id, player_ids, run_type, run_i
             warnings.append("Rubric weights are provisional (points values not final)")
         if choice.borrowed_from:
             warnings.append(f"{group} weights unreliable; borrowed from {choice.borrowed_from}")
+        if coverage:
+            matched, listed = coverage
+            warnings.append(f"{matched} of {listed} players matched")
+            if listed - matched > 1:
+                warnings.append(f"{listed - matched} players unmatched and not scored: confirm each once with "
+                                "python -m engine.cli link --source cricketdata --name \"<name>\" --player <id>")
 
         step = "fill recent"
         if client is not None:

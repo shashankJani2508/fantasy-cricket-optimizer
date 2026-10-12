@@ -22,6 +22,7 @@ class MemoryStore:
         self.hist = {}            # player_id -> [history row]
         self.fi = []              # (group, date, venue, total)
         self.teams = {}           # (team, gender) -> [(pid, name)]
+        self.recent = {}          # (team, gender) -> [(pid, name)] in the last 12 months
         self.link = {}            # (source, name) -> [pid]
         self.points = {}          # (pid, match_id) -> row
         self.xi = {}              # (match_id, pid) -> team
@@ -38,9 +39,11 @@ class MemoryStore:
     def history(self, pid, before):
         return sorted([r for r in self.hist.get(pid, []) if r["date"] < before], key=lambda r: r["date"])
     def first_innings(self, group, before): return [(d, v, t) for g, d, v, t in self.fi if g == group and d < before]
-    def team_players(self, team, gender): return self.teams.get((team, gender), [])
+    def team_players(self, team, gender, since=None):
+        return self.recent.get((team, gender), []) if since else self.teams.get((team, gender), [])
     def links(self, source, name): return list(self.link.get((source, name), []))
-    def add_link(self, pid, source, name): self.link.setdefault((source, name), []).append(pid)
+    def add_link(self, pid, source, name, confirmed=False): self.link.setdefault((source, name), []).append(pid)
+    def links_for_player(self, pid, source): return [n for (s, n), ps in self.link.items() if s == source and pid in ps]
     def player_team(self, mid, pid): return self.xi.get((mid, pid))
     def player_cricketdata_id(self, pid): return self.cd_ids.get(pid)
     def format_scaling(self, a, b): return self.scaling.get((a, b))
