@@ -113,9 +113,44 @@ def match_view(s, mid):
     if not r:
         raise HTTPException(404, "Match not found.")
     (i, fmt, group, series, start, status, xi, ta, tb, vid, vname, city) = r[0]
+    ta_, tb_ = team_view(s, ta), team_view(s, tb)
+    for t in (ta_, tb_):
+        if t:
+            t["country"] = country_of(t["name"], series)
     return {"id": i, "format": fmt, "format_group": group, "series": series, "start_time": _iso(start),
-            "status": status, "xi_announced": xi, "team_a": team_view(s, ta), "team_b": team_view(s, tb),
+            "status": status, "xi_announced": xi, "team_a": ta_, "team_b": tb_,
             "venue": vname, "venue_id": vid, "city": city, "_start": start}
+
+
+COUNTRIES = {"Pakistan", "Sri Lanka", "India", "Australia", "England", "New Zealand", "South Africa", "Bangladesh",
+             "Afghanistan", "Zimbabwe", "Ireland", "United Arab Emirates", "United States of America", "Nepal",
+             "Netherlands", "Oman", "Namibia", "Scotland", "Canada", "Kuwait", "Hong Kong"}
+COMPETITIONS = {"ranji": "India", "duleep": "India", "vijay hazare": "India", "syed mushtaq": "India", "ipl": "India",
+                "sheffield shield": "Australia", "marsh cup": "Australia", "big bash": "Australia", "csa ": "South Africa",
+                "county championship": "England", "vitality blast": "England", "plunket": "New Zealand",
+                "super smash": "New Zealand", "quaid-e-azam": "Pakistan", "psl": "Pakistan"}
+
+
+def country_of(team, series):
+    """Country for the flag: the team itself, else the country its competition is played in."""
+    base = (team or "").replace(" Women", "").strip()
+    if base in COUNTRIES:
+        return base
+    low = (series or "").lower()
+    return next((c for k, c in COMPETITIONS.items() if k in low), None)
+
+
+def stars(s, mid, n=2):
+    """Per team: squad players with a real photo, highest average Dream11 points first."""
+    rows = s.q("""SELECT t.name, p.id, p.full_name, p.image_url, avg(pm.total_points) a FROM match_xi x
+                  JOIN players p ON p.id = x.player_id JOIN teams t ON t.id = x.team_id
+                  LEFT JOIN player_match_points pm ON pm.player_id = p.id
+                  WHERE x.match_id = %s AND p.image_url IS NOT NULL GROUP BY 1, 2, 3, 4 ORDER BY a DESC NULLS LAST""", (mid,))
+    out = {}
+    for team, pid, name, url, _ in rows:
+        if len(out.setdefault(team, [])) < n:
+            out[team].append({"player_id": pid, "name": name, "image_url": url})
+    return out
 
 
 def rules_for(group):
@@ -148,7 +183,8 @@ def upcoming(request: Request):
             fc = None
         ch = s.q("""SELECT choice, chosen_at FROM match_choices WHERE match_id = %s AND NOT undone
                     ORDER BY chosen_at DESC LIMIT 1""", (mid,))
-        out.append({**m, "rain_chance": fc["rain_chance_pct"] if fc else None, "choice": ch[0][0] if ch else None})
+        out.append({**m, "rain_chance": fc["rain_chance_pct"] if fc else None, "choice": ch[0][0] if ch else None,
+                    "stars": stars(s, mid)})
     nxt = s.q("SELECT id FROM matches WHERE status = 'upcoming' AND start_time > %s ORDER BY start_time LIMIT 1",
               (now + dt.timedelta(days=7),))
     nm = match_view(s, nxt[0][0]) if nxt else None
@@ -425,6 +461,8 @@ def get_run(rid: str):
     m.pop("_start")
     lst = pipeline.aryan_list(s, out["match_id"])
     photos = dict(s.q("SELECT id, image_url FROM players WHERE id = ANY(%s)", (list(lst),)))
+    credits = {r[0]: {"author": r[1], "license": r[2], "page": r[3]} for r in s.q(
+        "SELECT id, image_author, image_license, image_page_url FROM players WHERE id = ANY(%s) AND image_source = 'wikimedia'", (list(lst),))}
     codes = {t["name"]: t for t in (m["team_a"], m["team_b"]) if t}
     preds = {r[0]: r for r in s.q("""SELECT player_id, base_score, adjusted_score, gemini_change_pct, factors, trust,
                                        thin_data, fallback_step, fallback_note FROM predictions WHERE run_id = %s""",
@@ -441,7 +479,7 @@ def get_run(rid: str):
         t = codes.get(p["side"]) or {}
         players[pid] = {"player_id": pid, "name": p["name"], "team": p["side"], "team_code": t.get("code", p["side"]),
                         "colour": t.get("colour"), "role": p["role"], "credits": p["credits"],
-                        "image_url": photos.get(pid),
+                        "image_url": photos.get(pid), "photo_credit": credits.get(pid),
                         "base": pr[1] if pr else None, "expected": pr[2] if pr else None,
                         "change_pct": pr[3] if pr else None, "factors": pr[4] if pr else None,
                         "trust": pr[5] if pr else None, "thin": pr[6] if pr else None,
@@ -705,6 +743,14 @@ def put_settings(body: SettingsPut):
         s.q("UPDATE teams SET colour_hex = %s WHERE id = %s RETURNING id", (hexv, tid))
     pipeline.log(s, "aryan", "settings_changed", None, body.model_dump())
     return {"ok": True}
+
+
+@app.get("/api/credits")
+def photo_credits():
+    s = db()
+    return {"photos": [dict(zip(("name", "url", "author", "license", "page"), r)) for r in s.q(
+        """SELECT full_name, image_url, image_author, image_license, image_page_url FROM players
+           WHERE image_source = 'wikimedia' ORDER BY full_name""")]}
 
 
 # ---- cron ------------------------------------------------------------------------------------------------------

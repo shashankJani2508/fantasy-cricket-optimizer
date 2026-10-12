@@ -27,7 +27,8 @@ export default function Settings() {
   return (
     <section className="space-y-6">
       {back}
-      <h1 className="num text-s26 font-bold">Settings</h1>
+      <div className="flex items-center justify-between"><h1 className="num text-s26 font-bold">Settings</h1>
+        <Link href="/learnings/credits" className="rounded-full bg-surface2 px-4 py-2 text-s14 font-semibold">Photo credits</Link></div>
       <div>
         <h2 className="num mb-3 text-s20 font-bold">Dream11 team rules</h2>
         <div className="space-y-2">

@@ -35,11 +35,11 @@ export default function Results() {
                 {r.run_status === "failed" ? <Chip tone="red">Build failed</Chip> : r.run_status !== "done" ? <Chip tone="glass">Building</Chip> : <Chip tone={TONE[r.state] ?? "glass"}>{r.state}</Chip>}
               </div>
               <div className="relative mt-3 flex items-center gap-3">
-                <TeamBadge name={r.team_a?.name} code={r.team_a?.code} colour={r.team_a?.colour} size={40} />
+                <TeamBadge country={r.team_a?.country} name={r.team_a?.name} code={r.team_a?.code} colour={r.team_a?.colour} size={40} />
                 <span className="num text-s20 font-bold">{r.team_a?.code}</span>
                 <span className="num font-extrabold italic text-orange">VS</span>
                 <span className="num text-s20 font-bold">{r.team_b?.code}</span>
-                <TeamBadge name={r.team_b?.name} code={r.team_b?.code} colour={r.team_b?.colour} size={40} />
+                <TeamBadge country={r.team_b?.country} name={r.team_b?.name} code={r.team_b?.code} colour={r.team_b?.colour} size={40} />
               </div>
             </Link>
           </li>

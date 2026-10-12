@@ -68,6 +68,7 @@ export function PlayerSheet({ p, run, onClose, isCap, isVc }: { p: Player | null
         <PlayerAvatar name={p.name} url={p.image_url} colour={p.colour} size={96} badge={isCap ? "C" : isVc ? "VC" : undefined} />
         <div className="min-w-0">
           <h3 className="num text-[22px] font-bold leading-tight">{p.name}</h3>
+          {p.photo_credit && <a href={p.photo_credit.page} target="_blank" rel="noreferrer noopener" className="text-[11px] text-muted underline-offset-2 hover:underline">Photo: {p.photo_credit.author}, {p.photo_credit.license}</a>}
           <div className="mt-2 flex flex-wrap gap-1.5"><Chip tone="glass">{p.team_code}</Chip><Chip tone="glass">{p.role}</Chip><Chip tone="muted"><span className="num font-bold text-ink">{p.credits}</span> cr</Chip></div>
         </div>
       </div>

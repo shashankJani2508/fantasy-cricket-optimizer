@@ -22,3 +22,14 @@ export function matchArt(a?: string | null, b?: string | null) {
 }
 export const ring = (a?: string | null, b?: string | null) =>
   `conic-gradient(from 210deg, ${colourOf(a)}, ${colourOf(b)}, ${colourOf(a)})`;
+
+/** "Meghalaya vs Manipur, Plate, Ranji Trophy Plate 2026-27" -> title "Meghalaya vs Manipur", stage "Plate · Ranji Trophy Plate 2026-27". */
+export function splitSeries(series?: string | null) {
+  const parts = (series ?? "").split(", ");
+  return { title: parts[0] ?? "", stage: parts.slice(1).join(" · ") };
+}
+/** CricketData.org writes "TBC" (to be confirmed) when the venue isn't announced. */
+export function venueText(venue?: string | null, city?: string | null) {
+  const v = [venue, city].filter((x) => x && !/^tbc$/i.test(x.trim())).join(", ");
+  return v && !/^tbc/i.test(v) ? v : "Venue not announced yet";
+}

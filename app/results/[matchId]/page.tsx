@@ -67,7 +67,8 @@ function MatchView() {
   if (scored) tabs.push({ key: "scorecard", label: "Scorecard" });
 
   return (
-    <article className="space-y-4">
+    <article className="space-y-4 md:grid md:grid-cols-[minmax(0,1fr)_380px] md:items-start md:gap-8 md:space-y-0">
+      <div className="space-y-4">
       {back}
       <header className="noise relative overflow-hidden rounded-card p-5 shadow-card" style={matchArt(m.team_a?.colour, m.team_b?.colour)}>
         <div className="relative flex items-center justify-between">
@@ -75,9 +76,9 @@ function MatchView() {
           {run.run_type === "post_toss" ? <Chip tone="green">Final</Chip> : <Chip tone="amber">Provisional</Chip>}
         </div>
         <div className="relative my-4 flex items-center justify-center gap-5">
-          <div className="flex flex-col items-center gap-1"><TeamBadge name={m.team_a?.name} code={m.team_a?.code} colour={m.team_a?.colour} size={52} /><span className="num font-bold">{m.team_a?.code}</span></div>
+          <div className="flex flex-col items-center gap-1"><TeamBadge country={m.team_a?.country} name={m.team_a?.name} code={m.team_a?.code} colour={m.team_a?.colour} size={52} /><span className="num font-bold">{m.team_a?.code}</span></div>
           <span className="num text-s34 font-extrabold italic text-orange">VS</span>
-          <div className="flex flex-col items-center gap-1"><TeamBadge name={m.team_b?.name} code={m.team_b?.code} colour={m.team_b?.colour} size={52} /><span className="num font-bold">{m.team_b?.code}</span></div>
+          <div className="flex flex-col items-center gap-1"><TeamBadge country={m.team_b?.country} name={m.team_b?.name} code={m.team_b?.code} colour={m.team_b?.colour} size={52} /><span className="num font-bold">{m.team_b?.code}</span></div>
         </div>
         <div className="relative flex items-end justify-between">
           <div><div className="num text-s34 font-extrabold leading-none">{pts(shown.total_expected, 0)}</div><div className="text-s12 text-muted">expected points</div></div>
@@ -105,6 +106,8 @@ function MatchView() {
         </>
       )}
 
+      </div>
+      <div className="space-y-4 md:sticky md:top-10">
       {tab !== "scorecard" && nextSteps(run.warnings).length > 0 && (
         <Warning><strong className="font-semibold">Your next steps</strong><ul className="mt-1 space-y-0.5 text-muted">{nextSteps(run.warnings).map((w) => <li key={w}>· {w}</li>)}</ul></Warning>
       )}
@@ -119,6 +122,8 @@ function MatchView() {
       )}
       {finished && scored === false && aryan && <ResultsEntry run={run} onSaved={() => { setScored(true); setTab("scorecard"); load(); }} />}
       {finished && scored === false && !aryan && <p className="text-s14 text-muted">Results not entered yet.</p>}
+      {!finished && tab === "system" && aryan && <button onClick={() => setTab("mine")} className="w-full rounded-full bg-surface2 py-3 font-semibold">Edit my team</button>}
+      </div>
 
       <PlayerSheet p={sel} run={run} onClose={() => setSel(null)} isCap={sel?.player_id === shown.captain_id} isVc={sel?.player_id === shown.vc_id} />
       <BenchSheet open={bench} onClose={() => setBench(false)} bench={run.bench} players={run.players} onTap={(p) => { setBench(false); setSel(p); }} />

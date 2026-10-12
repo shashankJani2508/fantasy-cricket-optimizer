@@ -69,8 +69,8 @@ export function ErrorNote({ children }: { children: ReactNode }) {
 }
 
 /** Country flag in a circle, or a monogram on the team colour for franchises (never official logos). */
-export function TeamBadge({ name, code, colour, size = 56 }: { name?: string | null; code?: string | null; colour?: string | null; size?: number }) {
-  const flag = flagOf(name);
+export function TeamBadge({ name, code, colour, size = 56, country }: { name?: string | null; code?: string | null; colour?: string | null; size?: number; country?: string | null }) {
+  const flag = flagOf(country ?? name);
   return (
     <span className="relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full ring-2 ring-white/20"
       style={{ width: size, height: size, background: `radial-gradient(circle at 30% 25%, ${colourOf(colour)}, #0A0B10 130%)` }}>
@@ -119,10 +119,10 @@ export function Sheet({ open, onClose, title, children }: { open: boolean; onClo
   return (
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center">
+        <div className="fixed inset-0 z-50 flex items-end justify-center md:items-center">
           <motion.div className="absolute inset-0 bg-black/60" onClick={onClose} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} />
           <motion.div ref={ref} tabIndex={-1} role="dialog" aria-modal aria-label={title}
-            className="relative max-h-[92vh] w-full max-w-[440px] overflow-y-auto rounded-t-sheet border-x border-t border-white/10 bg-[#13151D]/95 px-5 pb-10 pt-3 outline-none backdrop-blur-xl"
+            className="relative max-h-[92vh] w-full max-w-[440px] overflow-y-auto rounded-t-sheet md:mb-[4vh] md:max-w-[560px] md:rounded-sheet md:border-b border-x border-t border-white/10 bg-[#13151D]/95 px-5 pb-10 pt-3 outline-none backdrop-blur-xl"
             initial={reduce ? { opacity: 0 } : { y: "100%" }} animate={reduce ? { opacity: 1 } : { y: 0 }} exit={reduce ? { opacity: 0 } : { y: "100%" }}
             transition={reduce ? { duration: 0.15 } : { type: "spring", damping: 30, stiffness: 300 }}>
             <div aria-hidden className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-white/20" />

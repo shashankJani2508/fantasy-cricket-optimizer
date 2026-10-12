@@ -3,12 +3,12 @@ import { animate, motion, useMotionValue, useReducedMotion, useTransform } from 
 import { Check, CloudRain, MapPin, Users, X } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { api, Match } from "@/lib/api";
-import { matchArt, ring } from "@/lib/teams";
+import { api, Match, Star } from "@/lib/api";
+import { matchArt, ring, splitSeries, venueText } from "@/lib/teams";
 import { Chip, countdown, ErrorNote, haptic, localTime, Skeleton, TeamBadge, useAuth, useSnack } from "@/components/ui";
 import { SetupSheet } from "@/components/SetupSheet";
 
-type Card = Match & { rain_chance: number | null; choice: "play" | "skip" | null };
+type Card = Match & { rain_chance: number | null; choice: "play" | "skip" | null; stars?: Record<string, Star[]> };
 type Deck = { matches: Card[]; next_match: Match | null; stale_since: string | null };
 const code = (t: Match["team_a"]) => t?.code ?? "TBC";
 
@@ -67,14 +67,14 @@ export default function Upcoming() {
       )}
       {deck && n > 0 && (
         <>
-          <div className="no-scrollbar -mx-5 mb-5 flex gap-4 overflow-x-auto px-5" aria-label="Matches this week">
+          <div className="no-scrollbar -mx-5 mb-5 flex gap-4 overflow-x-auto px-5 md:hidden" aria-label="Matches this week">
             {deck.matches.map((m) => (
               <button key={m.id} onClick={() => (m.choice === "play" ? location.assign(`/results/${encodeURIComponent(m.id)}`) : setTopId(m.id))}
                 className="flex w-[72px] shrink-0 flex-col items-center gap-1.5" aria-label={`${code(m.team_a)} v ${code(m.team_b)}${m.choice === "play" ? ", playing" : ""}`}>
                 <span className="relative rounded-full p-[3px]" style={{ background: ring(m.team_a?.colour, m.team_b?.colour) }}>
                   <span className="relative block h-[60px] w-[60px] overflow-hidden rounded-full border-2 border-bg">
-                    <span className="absolute inset-0"><TeamBadge name={m.team_a?.name} code={m.team_a?.code} colour={m.team_a?.colour} size={56} /></span>
-                    <span className="absolute inset-0" style={{ clipPath: "polygon(100% 0, 100% 100%, 0 100%)" }}><TeamBadge name={m.team_b?.name} code={m.team_b?.code} colour={m.team_b?.colour} size={56} /></span>
+                    <span className="absolute inset-0"><TeamBadge country={m.team_a?.country} name={m.team_a?.name} code={m.team_a?.code} colour={m.team_a?.colour} size={56} /></span>
+                    <span className="absolute inset-0" style={{ clipPath: "polygon(100% 0, 100% 100%, 0 100%)" }}><TeamBadge country={m.team_b?.country} name={m.team_b?.name} code={m.team_b?.code} colour={m.team_b?.colour} size={56} /></span>
                   </span>
                   {m.choice === "play" && <span className="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-red"><Check size={12} strokeWidth={3} /></span>}
                 </span>
@@ -82,9 +82,27 @@ export default function Upcoming() {
               </button>
             ))}
           </div>
-          {open.length > 0 ? <SwipeDeck cards={open} onChoose={choose} /> : (
+          <div className="md:grid md:grid-cols-[minmax(0,1fr)_340px] md:gap-8">
+          <div>{open.length > 0 ? <SwipeDeck cards={open} onChoose={choose} /> : (
             <div className="rounded-card bg-surface p-6 text-center text-muted shadow-card">You&apos;ve been through every match this week. Your teams are in Results.</div>
-          )}
+          )}</div>
+          <aside className="hidden md:block">
+            <h2 className="mb-3 text-s14 font-semibold text-muted">All matches this week</h2>
+            <ul className="max-h-[72vh] space-y-2 overflow-y-auto pr-1">
+              {deck.matches.map((m) => (
+                <li key={m.id}>
+                  <button onClick={() => (m.choice === "play" ? location.assign(`/results/${encodeURIComponent(m.id)}`) : setTopId(m.id))}
+                    className={`flex w-full items-center gap-3 rounded-tile p-3 text-left transition hover:bg-white/10 ${open[0]?.id === m.id ? "bg-white/10" : "bg-surface"}`}>
+                    <TeamBadge country={m.team_a?.country} name={m.team_a?.name} code={m.team_a?.code} colour={m.team_a?.colour} size={30} />
+                    <div className="min-w-0 flex-1"><div className="truncate text-s14 font-semibold">{splitSeries(m.series).title || `${code(m.team_a)} vs ${code(m.team_b)}`}</div>
+                      <div className="text-s12 text-muted">{localTime(m.start_time)}</div></div>
+                    {m.choice === "play" ? <Chip tone="red">Playing</Chip> : m.choice === "skip" ? <Chip tone="muted">Skipped</Chip> : null}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </aside>
+          </div>
           {skipped.length > 0 && (
             <div className="mt-6">
               <button className="min-h-[44px] text-s14 font-semibold text-muted" onClick={() => setShowSkipped((v) => !v)} aria-expanded={showSkipped}>Skipped ({skipped.length}) ›</button>
@@ -128,7 +146,7 @@ function SwipeDeck({ cards, onChoose }: { cards: Card[]; onChoose: (m: Card, c: 
   }, [commit]);
   return (
     <div>
-      <div className="relative h-[clamp(320px,calc(100vh-420px),500px)]">
+      <div className="relative h-[clamp(340px,calc(100vh-420px),520px)] md:h-[560px]">
         {cards[1] && <motion.div className="absolute inset-0" style={{ scale: nextScale }} aria-hidden><FixtureCard m={cards[1]} /></motion.div>}
         <motion.div key={top.id} className="absolute inset-0 cursor-grab touch-pan-y active:cursor-grabbing" style={{ x, rotate }}
           drag="x" dragConstraints={{ left: 0, right: 0 }} dragElastic={0.9}
@@ -151,35 +169,67 @@ function SwipeDeck({ cards, onChoose }: { cards: Card[]; onChoose: (m: Card, c: 
 
 function FixtureCard({ m }: { m: Card }) {
   const live = m.status === "live";
+  const { title, stage } = splitSeries(m.series);
+  const rx = useMotionValue(0), ry = useMotionValue(0);
+  const reduce = useReducedMotion();
+  const tilt = (e: React.PointerEvent<HTMLElement>) => {
+    if (reduce || e.pointerType !== "mouse") return;
+    const r = e.currentTarget.getBoundingClientRect();
+    ry.set(((e.clientX - r.left) / r.width - 0.5) * 10);
+    rx.set(-((e.clientY - r.top) / r.height - 0.5) * 10);
+  };
+  const stars = (t: Match["team_a"]) => (t && m.stars?.[t.name]) || [];
   return (
-    <article className="noise relative flex h-full select-none flex-col overflow-hidden rounded-card p-5 shadow-card" style={matchArt(m.team_a?.colour, m.team_b?.colour)}
-      aria-label={`${m.team_a?.name} vs ${m.team_b?.name}`}>
-      <div className="relative flex items-center justify-between gap-2">
-        <Chip tone="glass">{m.format === "T20" ? "T20" : m.format}</Chip>
-        {live ? <Chip tone="red">LIVE</Chip> : <span className="num rounded-full bg-black/35 px-3 py-1 text-s12 font-bold text-orange">{countdown(m.start_time)}</span>}
-      </div>
-      <div className="relative flex flex-1 items-center justify-center gap-5">
-        <Side t={m.team_a} />
-        <span className="num text-[44px] font-extrabold italic text-orange drop-shadow">VS</span>
-        <Side t={m.team_b} />
-      </div>
-      <div className="relative space-y-2">
-        {m.series && <p className="truncate text-s14 font-semibold">{m.series}</p>}
-        <p className="flex items-center gap-1.5 text-s14 text-muted"><MapPin size={14} strokeWidth={1.75} />{[m.venue, m.city].filter(Boolean).join(", ") || "Venue not announced"}</p>
-        <p className="text-s14 text-ink/90">{localTime(m.start_time)}</p>
-        <div className="flex flex-wrap gap-2 pt-1">
-          <Chip tone="glass"><CloudRain size={13} strokeWidth={1.75} />{m.rain_chance == null ? "Rain n/a" : `${m.rain_chance}% rain`}</Chip>
-          <Chip tone={m.xi_announced ? "green" : "glass"}><Users size={13} strokeWidth={1.75} />{m.xi_announced ? "XI announced" : "XI not yet"}</Chip>
+    <div style={{ perspective: 1000 }} className="h-full">
+      <motion.article onPointerMove={tilt} onPointerLeave={() => { rx.set(0); ry.set(0); }}
+        style={{ rotateX: rx, rotateY: ry, transformStyle: "preserve-3d", ...matchArt(m.team_a?.colour, m.team_b?.colour) }}
+        className="noise relative flex h-full select-none flex-col overflow-hidden rounded-card p-5 shadow-card" aria-label={`${m.team_a?.name} vs ${m.team_b?.name}`}>
+        <Stars list={stars(m.team_a)} side="left" />
+        <Stars list={stars(m.team_b)} side="right" />
+        <div className="relative flex items-center justify-between gap-2">
+          <Chip tone="glass">{m.format}</Chip>
+          {live ? <Chip tone="red">LIVE</Chip> : <span className="num rounded-full bg-black/35 px-3 py-1 text-s12 font-bold text-orange">{countdown(m.start_time)}</span>}
         </div>
-      </div>
-    </article>
+        <div className="relative flex flex-1 items-center justify-center gap-5" style={{ transform: "translateZ(40px)" }}>
+          <Side t={m.team_a} />
+          <span className="num text-[44px] font-extrabold italic text-orange drop-shadow">VS</span>
+          <Side t={m.team_b} />
+        </div>
+        <div className="relative space-y-1.5" style={{ transform: "translateZ(20px)" }}>
+          <p className="num text-s20 font-bold leading-tight">{title || `${code(m.team_a)} vs ${code(m.team_b)}`}</p>
+          {stage && <p className="text-s12 leading-snug text-ink/75">{stage}</p>}
+          <p className="flex items-center gap-1.5 pt-1 text-s14 text-muted"><MapPin size={14} strokeWidth={1.75} />{venueText(m.venue, m.city)}</p>
+          <p className="text-s14 text-ink/90">{localTime(m.start_time)}</p>
+          <div className="flex flex-wrap gap-2 pt-1">
+            <Chip tone="glass"><CloudRain size={13} strokeWidth={1.75} />{m.rain_chance == null ? "Rain forecast not ready" : `${m.rain_chance}% rain`}</Chip>
+            <Chip tone={m.xi_announced ? "green" : "glass"}><Users size={13} strokeWidth={1.75} />{m.xi_announced ? "XI announced" : "XI not yet"}</Chip>
+          </div>
+        </div>
+      </motion.article>
+    </div>
+  );
+}
+
+/** Real photos (CricketData.org or Wikimedia) of each side's top players, faded into the poster. */
+function Stars({ list, side }: { list: Star[]; side: "left" | "right" }) {
+  if (!list.length) return null;
+  const mask = "radial-gradient(ellipse 60% 65% at 50% 40%, black 45%, transparent 75%)";
+  return (
+    <div aria-hidden className={`pointer-events-none absolute top-10 flex ${side === "left" ? "-left-6" : "-right-6 flex-row-reverse"}`}>
+      {list.map((p, i) => (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img key={p.player_id} src={p.image_url} alt="" width={150} height={190} loading="lazy"
+          className={`h-[190px] w-[150px] object-cover ${i ? "-mx-10 mt-10 opacity-60" : "opacity-80"}`}
+          style={{ maskImage: mask, WebkitMaskImage: mask }} />
+      ))}
+    </div>
   );
 }
 
 function Side({ t }: { t: Match["team_a"] }) {
   return (
     <div className="flex flex-col items-center gap-2">
-      <div className="rounded-full p-1" style={{ boxShadow: `0 0 40px ${t?.colour ?? "#3A3F52"}aa` }}><TeamBadge name={t?.name} code={t?.code} colour={t?.colour} size={84} /></div>
+      <div className="rounded-full p-1" style={{ boxShadow: `0 0 40px ${t?.colour ?? "#3A3F52"}aa` }}><TeamBadge country={t?.country} name={t?.name} code={t?.code} colour={t?.colour} size={84} /></div>
       <span className="num text-s26 font-bold">{code(t)}</span>
     </div>
   );

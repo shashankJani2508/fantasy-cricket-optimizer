@@ -28,7 +28,8 @@ export async function api<T = any>(path: string, opts: { method?: string; body?:
   return res.json();
 }
 
-export type Team = { id: string; name: string; code: string; colour: string | null } | null;
+export type Team = { id: string; name: string; code: string; colour: string | null; country?: string | null } | null;
+export type Star = { player_id: string; name: string; image_url: string };
 export type Match = {
   id: string; format: string; format_group: string; series: string | null; start_time: string | null;
   status: string; xi_announced: boolean; team_a: Team; team_b: Team; venue: string | null; city: string | null;
@@ -40,7 +41,7 @@ export type Rules = {
 };
 export type Player = {
   player_id: string; name: string; team: string; team_code: string; colour: string | null; role: Role; credits: number;
-  image_url: string | null; base: number | null; expected: number | null; change_pct: number | null;
+  image_url: string | null; photo_credit?: { author: string; license: string; page: string } | null; base: number | null; expected: number | null; change_pct: number | null;
   factors: Record<string, number> | null; trust: Record<string, number> | null; thin: boolean | null;
   fallback_step: number | null; fallback_note: string | null;
   adjustment: { applied_pct: number; requested_pct: number; clipped: boolean; reason: string; source_url: string | null } | null;
