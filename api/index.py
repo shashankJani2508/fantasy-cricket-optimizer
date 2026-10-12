@@ -294,13 +294,22 @@ def _read(s, mid, kind, files):
     m = match_view(s, mid)
     players = match_players(s, mid)
     st = Settings(s)
-    try:
-        out, _ = Gemini(s).read_screenshot(kind, _images(files),
-                                           [t["name"] for t in (m["team_a"], m["team_b"]) if t],
-                                           [p["name"] for p in players], st.get("screenshot_credits_range"),
-                                           st.get("screenshot_points_range"))
-    except GeminiFailed:
-        raise HTTPException(502, "Couldn't read the screenshot. Try a clearer one, or type the values instead.")
+    from concurrent.futures import ThreadPoolExecutor
+    imgs = _images(files)
+    teams = [t["name"] for t in (m["team_a"], m["team_b"]) if t]
+    names = [p["name"] for p in players]
+    cr, pr = st.get("screenshot_credits_range"), st.get("screenshot_points_range")
+
+    def one(img):
+        try:
+            return Gemini(PgStore()).read_screenshot(kind, [img], teams, names, cr, pr)[0]
+        except GeminiFailed:
+            return None
+    with ThreadPoolExecutor(max_workers=min(6, len(imgs))) as ex:
+        parts = [p for p in ex.map(one, imgs) if p]
+    if not parts:
+        raise HTTPException(502, "Couldn't read the screenshots. Try clearer ones, or type the values instead.")
+    out = {"kind": kind, "rows": [r for p in parts for r in p["rows"]], "rank": next((p["rank"] for p in parts if p.get("rank")), None)}
     # the same player can appear on several screenshots (e.g. list without credits + preview with credits): merge
     merged = {}
     for r in out["rows"]:
@@ -347,6 +356,15 @@ def _read(s, mid, kind, files):
                     r["player_id"] = hits[0]
                     s.add_link(hits[0], "dream11", r["name_on_screen"])
                     s.set_xi(mid, team, gender, hits[0], "dream11")
+        team = codes.get(r.get("team_code"))
+        if r["player_id"] is None and not twin and team and kind == "player_list":
+            import re as _re
+            pid = "d11:" + _re.sub(r"[^a-z0-9]+", "-", f"{team} {r['name_on_screen']}".lower()).strip("-")
+            s.q("INSERT INTO players (id, full_name, gender) VALUES (%s, %s, %s) ON CONFLICT (id) DO NOTHING RETURNING id",
+                (pid, r["name_on_screen"].rstrip(". …"), gender))
+            s.add_link(pid, "dream11", r["name_on_screen"])
+            s.set_xi(mid, team, gender, pid, "dream11")
+            r["player_id"] = pid
         if r["player_id"] is None:
             r["skip_reason"] = ("two players share this name; left out" if twin else "not in our player data yet; left out")
     known = {p["player_id"]: p for p in match_players(s, mid)}   # includes players just added from team history

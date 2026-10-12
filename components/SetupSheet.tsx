@@ -53,8 +53,6 @@ export function SetupSheet({ match, onClose }: { match: Match; onClose: (saved?:
       const noCredits = next.filter((x) => x.out && read.has(x.player_id)).map((x) => `${x.name} (no credits on screenshot)`);
       setRows(next); setUnmatched([]); setTyping(true);
       setNote([...skipped, ...noCredits].length ? `Left out automatically: ${[...skipped, ...noCredits].join(", ")}.` : null);
-      const ready = next.filter((x) => !x.out);
-      if (ready.length >= 11 && ready.every((x) => x.role && x.credits)) await saveRows(ready);
     } catch (e: any) { setErr(e.message); }
     setReading(false);
   };
