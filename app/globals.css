@@ -1,0 +1,22 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --sightscreen: 243 245 241; --pavilion: 22 33 58; --turf: 30 107 69; --ball: 181 23 47;
+  --floodlight: 233 185 42; --clay: 217 201 163; --slate: 107 115 133; --surface: 255 255 255;
+  --bg: var(--sightscreen); --fg: var(--pavilion);
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: var(--pavilion); --fg: var(--sightscreen); --surface: 30 43 72; --slate: 160 167 184; }
+}
+html, body { background: rgb(var(--bg)); color: rgb(var(--fg)); }
+.text-fg { color: rgb(var(--fg)); }
+.bg-app { background: rgb(var(--bg)); }
+.border-fg\/10 { border-color: rgb(var(--fg) / 0.1); }
+.num { font-family: var(--font-display); font-variant-numeric: tabular-nums; }
+:focus-visible { outline: 3px solid rgb(var(--floodlight)); outline-offset: 2px; border-radius: 6px; }
+.shimmer { background: linear-gradient(90deg, rgb(var(--fg) / .06), rgb(var(--fg) / .12), rgb(var(--fg) / .06));
+  background-size: 200% 100%; animation: shimmer 1.4s linear infinite; }
+@keyframes shimmer { to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .shimmer { animation: none; } }

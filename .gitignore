@@ -11,3 +11,8 @@ tools/progress.txt
 score*.txt
 scoring_engine.zip
 data/register/
+node_modules/
+.next/
+next-env.d.ts
+*.tsbuildinfo
+.vercel
