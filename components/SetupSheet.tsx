@@ -114,7 +114,9 @@ export function SetupSheet({ match, onClose }: { match: Match; onClose: (saved?:
             <ErrorNote>No squad is available for this match yet. Try again closer to the start.</ErrorNote>
           ) : (
             <ul className="space-y-2">
-              {rows.map((r) => (
+              <li className="pt-1 text-s14 font-semibold">In your Dream11 list ({rows.filter((r) => !r.out).length}) <span className="font-normal text-muted">· check role and credits</span></li>
+              {[...rows.filter((r) => !r.out), ...rows.filter((r) => r.out)].map((r, i, all) => (<>
+                {r.out && (i === 0 || !all[i - 1].out) && <li key="h-out" className="pt-4 text-s14 font-semibold text-muted">Left out ({rows.filter((x) => x.out).length}) <span className="font-normal">· not on your screenshots; tap Add back to include</span></li>}
                 <li key={r.player_id} className={`flex items-center gap-3 rounded-tile bg-surface p-2.5 pr-3 ${r.unsure ? "border-l-4 border-amber" : ""} ${r.out ? "opacity-40" : ""}`}>
                   <PlayerAvatar name={r.name} url={r.image_url} colour={r.colour} size={36} />
                   <div className="min-w-0 flex-1">
@@ -123,7 +125,7 @@ export function SetupSheet({ match, onClose }: { match: Match; onClose: (saved?:
                       <span>{r.team_code}</span>
                       {r.unsure && <span className="text-amber">· Check this</span>}
                       {r.from_last_match && <span>· from last match</span>}
-                      <button className="text-muted underline-offset-2 hover:underline" onClick={() => update(r.player_id, { out: !r.out })}>· {r.out ? "Add back" : "Not in list"}</button>
+                      <button className="text-muted underline-offset-2 hover:underline" onClick={() => update(r.player_id, { out: !r.out })}>· {r.out ? "Add back" : "Remove"}</button>
                     </div>
                   </div>
                   <select aria-label={`Role for ${r.name}`} value={r.role ?? ""} disabled={r.out}
@@ -135,7 +137,7 @@ export function SetupSheet({ match, onClose }: { match: Match; onClose: (saved?:
                     onChange={(e) => update(r.player_id, { credits: e.target.value === "" ? null : Number(e.target.value), via: r.via === "screenshot" ? "screenshot" : "typed", unsure: false })}
                     className="num min-h-[40px] w-14 rounded-input bg-surface2 px-2 text-right text-s16 font-bold placeholder:text-muted/60" />
                 </li>
-              ))}
+              </>))}
             </ul>
           ))}
           <div className="sticky bottom-0 -mx-5 bg-gradient-to-t from-[#13151D] via-[#13151D] to-transparent px-5 pb-1 pt-4">

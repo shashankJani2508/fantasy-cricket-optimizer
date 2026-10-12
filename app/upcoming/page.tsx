@@ -134,9 +134,9 @@ function SwipeDeck({ cards, onChoose }: { cards: Card[]; onChoose: (m: Card, c: 
   const nextScale = useTransform(x, [-200, 0, 200], [1, 0.95, 1]);
   const commit = useCallback(async (c: "play" | "skip") => {
     const to = c === "play" ? 700 : -700;
-    if (reduce) x.set(to); else await animate(x, to, { type: "spring", stiffness: 260, damping: 30 });
-    await onChoose(top, c);
+    if (reduce) x.set(to); else await animate(x, to, { duration: 0.18, ease: "easeOut" });
     x.set(0);
+    onChoose(top, c);
   }, [onChoose, top, x, reduce]);
   useEffect(() => {
     const k = (e: KeyboardEvent) => {

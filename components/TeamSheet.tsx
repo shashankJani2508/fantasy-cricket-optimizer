@@ -151,7 +151,7 @@ export function CopySheet({ open, onClose, ids, cap, vc, players }: { open: bool
   const toggle = (id: string) => setTicked((t) => { const n = new Set(t); if (n.has(id)) n.delete(id); else n.add(id); return n; });
   return (
     <Sheet open={open} onClose={onClose} title="Copy to Dream11">
-      <p className="text-s14 text-muted">The app can&apos;t submit to Dream11. Tick each player as you add him.</p>
+      <p className="text-s14 text-muted">Pick these 11 in Dream11, then set captain and vice-captain.</p>
       <div className="my-5 space-y-2">
         <p className="num flex items-center gap-3 text-s26 font-bold"><span className="flex h-8 w-8 items-center justify-center rounded-full bg-gold text-s14 text-bg">C</span>{players[cap]?.name}</p>
         <p className="num flex items-center gap-3 text-s26 font-bold"><span className="flex h-8 w-8 items-center justify-center rounded-full bg-silver text-s12 text-bg">VC</span>{players[vc]?.name}</p>
@@ -163,15 +163,14 @@ export function CopySheet({ open, onClose, ids, cap, vc, players }: { open: bool
             <legend className="mb-1 text-s12 font-semibold text-muted">{r}</legend>
             {list.map((p) => (
               <label key={p} className="flex min-h-[48px] items-center gap-3 border-b hairline">
-                <input type="checkbox" className="h-5 w-5 accent-[#2BB673]" checked={ticked.has(p)} onChange={() => toggle(p)} />
-                <span className={ticked.has(p) ? "text-muted line-through" : ""}>{players[p].name}</span>
+                <span>{players[p].name}</span>
                 <span className="num ml-auto font-bold text-muted">{players[p].credits} cr</span>
               </label>
             ))}
           </fieldset>
         );
       })}
-      <p className="text-s14 text-muted"><span className="num font-bold text-ink">{ticked.size}</span> of {ids.length} added</p>
+
     </Sheet>
   );
 }

@@ -64,7 +64,8 @@ function MatchView() {
   const shown = tab === "mine" ? (mine ?? sys) : sys;
   const finished = m.status === "finished" || (m.start_time != null && new Date(m.start_time).getTime() < Date.now() - 3 * 3.6e6);
   const tabs: { key: Tab; label: string }[] = [{ key: "system", label: "System's pick" }, { key: "mine", label: "My final team" }];
-  if (scored) tabs.push({ key: "scorecard", label: "Scorecard" });
+  tabs.push({ key: "scorecard", label: "Actual results" });
+  const started = m.start_time != null && new Date(m.start_time).getTime() <= Date.now();
 
   return (
     <article className="space-y-4 md:grid md:grid-cols-[minmax(0,1fr)_380px] md:items-start md:gap-8 md:space-y-0">
@@ -97,7 +98,11 @@ function MatchView() {
 
       <PillTabs label="Team views" tabs={tabs} value={tab} onChange={setTab} />
 
-      {tab === "scorecard" ? <Scorecard matchId={mid} /> : tab === "mine" && aryan && !finished ? <Editor run={run} onSaved={load} /> : (
+      {tab === "scorecard" ? (scored ? <Scorecard matchId={mid} /> : (
+        <div className="rounded-card bg-surface p-6 text-center shadow-card">
+          <p className="num text-s20 font-bold">{!started ? "Match yet to start" : !finished ? "Match in progress" : "Match finished: results not entered yet"}</p>
+          <p className="mt-2 text-s14 text-muted">{!started ? `Starts ${new Date(m.start_time ?? "").toLocaleString()}. Actual points appear here after the match.` : !finished ? "Actual points appear here once the match ends." : "Upload the Dream11 points screenshot below to see who really scored."}</p>
+        </div>)) : tab === "mine" && aryan && !finished ? <Editor run={run} onSaved={load} /> : (
         <>
           {tab === "mine" && !mine && <p className="text-s14 text-muted">{finished ? "You kept the system's pick." : "Enter the passcode to edit."}</p>}
           <TeamSheet ids={shown.player_ids} cap={shown.captain_id} vc={shown.vc_id} players={run.players} reveal={reveal && tab === "system"} onTap={setSel}

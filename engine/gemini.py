@@ -172,9 +172,9 @@ class Gemini:
                 self.model = resp.get("modelVersion") or self.model
             except (GeminiFailed, ValueError, KeyError, TypeError, OSError) as e:
                 last = f"{type(e).__name__}: {e}"
-                if "HTTP 429" in last and attempt < MAX_RETRIES:
-                    self.sleep(10)   # rate limited: wait longer than the normal backoff
                 self._log(job, run_id, summary, {"error": last}, False, [last], int((time.time() - t0) * 1000))
+                if "HTTP 429" in last:
+                    break   # quota exceeded: retrying won't help; the caller falls back
                 continue
             data["_sources"] = sources
             clean, errors, retry = check(data)
