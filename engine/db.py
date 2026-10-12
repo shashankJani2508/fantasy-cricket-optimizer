@@ -111,9 +111,9 @@ class PgStore:
         return self.one("SELECT cricketdata_id FROM players WHERE id = %s", (pid,))
 
     def set_cricketdata_id(self, pid, cd_id, image_url=None):
-        self.conn.execute("""UPDATE players SET cricketdata_id = COALESCE(cricketdata_id, %s),
-                             image_url = COALESCE(image_url, %s),
-                             image_source = CASE WHEN image_url IS NULL AND %s IS NOT NULL THEN 'cricketdata' ELSE image_source END,
+        self.conn.execute("""UPDATE players SET cricketdata_id = COALESCE(cricketdata_id, %s::text),
+                             image_url = COALESCE(image_url, %s::text),
+                             image_source = CASE WHEN image_url IS NULL AND %s::text IS NOT NULL THEN 'cricketdata' ELSE image_source END,
                              updated_at = now() WHERE id = %s""", (cd_id, image_url, image_url, pid))
 
     def full_name(self, pid):

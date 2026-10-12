@@ -1,0 +1,23 @@
+Pakistan vs Sri Lanka, 3rd T20I, Sri Lanka tour of Pakistan, 2026  [T20_men, pre_toss]  player list: players from previous match (Pakistan vs Sri Lanka, 2nd T20I, Sri Lanka tour of Pakistan, 2026)
+run fcbdbfa4-046a-4ed1-a282-a0b5fc3a09ac  rubric version 4  provisional weights: True  borrowed from: None  data stale: False
+player                   team           base    form   venue opponen current opportu  career bat_fir pitch_t  fb thin
+---------------------------------------------------------------------------------------------------------------------
+Maaz Sadaqat             Pakistan       60.2    81.5    79.7    85.2    81.5    59.1    53.7    81.5    45.8   1 no
+Shadab Khan              Pakistan       58.9    60.4    73.2    51.1    60.4    60.4    56.7    60.4    58.8   1 no
+Sahibzada Farhan         Pakistan       53.0    48.7    64.9    72.0    48.7    50.7    49.9    48.7    52.0   1 no
+Sineth Jayawardena       Sri Lanka      51.6    50.3    48.3    48.3    50.3    48.2    52.6    50.3    71.5   1 no
+Saim Ayub                Pakistan       48.9    53.7    53.7    43.0    53.7    58.8    48.0    53.7    50.7   1 no
+Fakhar Zaman             Pakistan       40.9    71.7    33.9    41.9    71.7    42.9    40.3    71.7    42.6   1 no
+E Malinga                Sri Lanka      40.6    35.1    32.1    33.3    38.4    44.0    42.8    35.1    39.8   1 no
+Abrar Ahmed              Pakistan       39.0    19.2    40.3    38.8    19.2    39.9    39.9    19.2    41.6   1 no
+B Fernando               Sri Lanka      37.7    37.1    33.4    33.4    37.1    38.8    38.8    37.1    39.6   1 no
+Naseem Shah              Pakistan       36.7    33.9    36.0    34.6    33.9    37.7    37.1    33.9    36.9   1 no
+M Theekshana             Sri Lanka      34.6    32.5    35.5    33.1    32.5    35.2    34.6    32.5    34.9   1 no
+C Wickramasinghe         Sri Lanka      33.9    27.2    28.1    28.1    27.2    31.4    35.7    27.2    39.1   1 no
+N Thushara               Sri Lanka      33.2    32.5    26.8    23.2    32.5    35.6    35.1    32.5    34.4   1 no
+Khawaja Nafay            Pakistan       31.5    26.2    29.8    23.9    26.2    41.8    32.6    26.2    26.9   1 no
+unmatched names (not scored): Hasan Nawaz, Dasun Shanaka, Kamindu Mendis, Lahiru Udara, Kusal Mendis, Sahan Arachchige, Mohammad Salman Mirza, Mohammad Imran Randhawa
+warning: Rubric weights are provisional (points values not final)
+warning: Pakistan vs Sri Lanka, 2nd T20I, Sri Lanka tour of Pakistan, 2026: 14 provisional scorecard rows
+warning: Pakistan vs Sri Lanka, 1st T20I, Sri Lanka tour of Pakistan, 2026: 11 provisional scorecard rows
+CricketData.org calls today: 47

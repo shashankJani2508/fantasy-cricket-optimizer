@@ -36,8 +36,18 @@ def scorecard_rows(scorecard):
         return rows.setdefault(k, {"bat": [], "bowl": [], "lbw_bowled": 0,
                                    "catching": {"catch": 0, "cb": 0, "stumped": 0, "runout": 0}})
 
+    prev_bat = None
     for inn in scorecard.get("scorecard", []):
-        bat_team = next((t for t in teams if inn["inning"].startswith(t)), None)
+        # Real labels vary: "Pakistan Inning 1", "sri lanka Inning 1", even "Pakistan,Sri Lanka Inning 1".
+        label = inn["inning"].lower()
+        hits = [t for t in teams if label.startswith(t.lower() + " ")]
+        if len(hits) == 1:
+            bat_team = hits[0]
+        else:   # ambiguous label: innings alternate, so it's the side that didn't bat last
+            bat_team = next((t for t in teams if t != prev_bat), None) if prev_bat else None
+        if bat_team is None:
+            continue
+        prev_bat = bat_team
         field_team = next((t for t in teams if t != bat_team), None)
         for pos, b in enumerate(inn.get("batting", []), start=1):
             row(bat_team, b["batsman"])["bat"].append({**b, "position": pos})
