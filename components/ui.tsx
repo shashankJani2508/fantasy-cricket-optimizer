@@ -31,9 +31,7 @@ export function Button({ kind = "primary", className = "", ...p }: React.ButtonH
 }
 
 export type Tone = "red" | "green" | "amber" | "orange" | "muted" | "glass" | "gold";
-const LEGACY: Record<string, Tone> = { turf: "green", ball: "red", floodlight: "amber", clay: "amber", slate: "muted", pavilion: "glass" };
-export function Chip({ tone: raw = "glass", children, className = "" }: { tone?: Tone | keyof typeof LEGACY; children: ReactNode; className?: string }) {
-  const tone: Tone = LEGACY[raw] ?? (raw as Tone);
+export function Chip({ tone = "glass", children, className = "" }: { tone?: Tone; children: ReactNode; className?: string }) {
   const t = { red: "bg-red text-white", green: "bg-green/15 text-green", amber: "bg-amber/15 text-amber", orange: "bg-orange/15 text-orange",
     muted: "bg-surface2 text-muted", glass: "glass text-ink", gold: "bg-gold/15 text-gold" }[tone];
   return <span className={`inline-flex items-center gap-1 whitespace-nowrap rounded-full px-3 py-1 text-s12 font-semibold ${t} ${className}`}>{children}</span>;

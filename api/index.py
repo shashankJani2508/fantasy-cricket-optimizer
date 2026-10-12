@@ -661,7 +661,8 @@ def get_settings():
     s = db()
     rules = yaml.safe_load((ROOT / "config" / "dream11_rules.yaml").read_text(encoding="utf8"))
     points = yaml.safe_load((ROOT / "config" / "dream11_points.yaml").read_text(encoding="utf8"))
-    teams = [{"id": a, "name": b, "code": c, "colour": d} for a, b, c, d in s.q(
+    teams = [{"id": a, "name": b, "code": c or (_COLOURS.get(b) or {}).get("code") or b, "colour": d or (_COLOURS.get(b) or {}).get("colour")}
+             for a, b, c, d in s.q(
         """SELECT DISTINCT t.id, t.name, t.short_code, t.colour_hex FROM teams t
            JOIN matches m ON t.id IN (m.team_a_id, m.team_b_id) WHERE m.start_time > now() - interval '60 days'
            ORDER BY t.name""")]
