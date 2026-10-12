@@ -127,6 +127,10 @@ def test_gate_rejects_each_kind_of_invalid_edit(edit, expected):
     assert not g.passed and any(expected in msg for _, msg in g.failures)
 
 
-def test_real_rules_file_refuses_null_role_limits():
+def test_rules_loader_refuses_nulls(tmp_path):
+    bad = tmp_path / "rules.yaml"
+    bad.write_text((ROOT / "config" / "dream11_rules.yaml").read_text(encoding="utf8").replace("max_per_side: 7", "max_per_side: null", 1),
+                   encoding="utf8")
     with pytest.raises(RulesError, match="Fill the Dream11 team rules"):
-        load_rules(ROOT / "config" / "dream11_rules.yaml", "T20")
+        load_rules(bad, "T20")
+    assert load_rules(ROOT / "config" / "dream11_rules.yaml", "T20")["role_limits"]["BOWL"] == {"min": 1, "max": 7}
