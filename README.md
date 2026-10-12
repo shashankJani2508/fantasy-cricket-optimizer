@@ -10,7 +10,7 @@ you approve or reject.
 | Part | What it does |
 |---|---|
 | Scoring engine (`engine/score.py`) | 8 factors from ball-by-ball history, weighted by the active rubric version. Deterministic, no AI |
-| Gemini Flash (`engine/gemini.py`) | Reads what numbers can't: today's news and pitch report (Google Search grounding, max ±20% per player, sources required), writes the reasons, analyses repeated misses, reads Dream11 screenshots. Never picks players or changes weights |
+| Gemini Flash (`engine/gemini.py`) | Reads what numbers can't: today's news and pitch report (Google News RSS + Google Search grounding in the same call, every cited link code-checked, max ±20% per player), writes the reasons, analyses repeated misses, reads Dream11 screenshots. Never picks players or changes weights |
 | Optimizer + gate (`engine/optimizer.py`, `engine/gate.py`) | Exact integer programme for the best valid team incl. captain 2x and vice-captain 1.5x; every team (and every edit) passes the Dream11 rules |
 | Run pipeline (`engine/pipeline.py`) | checking → scoring → moderating → optimizing → explaining → done; each step saved in Neon, resumable |
 | Learning loop (`engine/learning.py`) | Metrics per match, patterns, flags after 10 matches, history replay, rollback and Gemini-limit checks; weights change only with your approval |
@@ -22,7 +22,7 @@ you approve or reject.
 - **CricketData.org**: fixtures, squads, scorecards, player photos (cached; free tier 100 calls a day, the app stops at 95).
 - **Cricsheet**: ball-by-ball history and exact points.
 - **Open-Meteo**: rain chance, dew point and humidity at the venue (no key).
-- **Google Search through Gemini**: today's team news and pitch report, with source links.
+- **Google News RSS** (fetched and filtered by our code) **+ Google Search through Gemini**: today's team news and pitch report, with source links. If the API key's search quota is exhausted, the moderator reads the RSS items only.
 - **Dream11**: only through Aryan's screenshots or typing. The app never logs in to, scrapes or automates Dream11.
 
 ## Database: Neon
