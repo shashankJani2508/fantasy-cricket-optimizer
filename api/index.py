@@ -52,8 +52,11 @@ def _token():
 
 
 def is_aryan(request: Request):
+    """No APP_PASSCODE set = no passcode: the link is private to Aryan, so everyone who has it can use everything."""
     tok = _token()
-    return bool(tok) and hmac.compare_digest(request.cookies.get(COOKIE, ""), tok)
+    if tok is None:
+        return True
+    return hmac.compare_digest(request.cookies.get(COOKIE, ""), tok)
 
 
 def need_passcode(request: Request):

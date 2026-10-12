@@ -44,7 +44,7 @@ python -m pytest -q tests   # tests never call a live API
 ## Environment variables
 
 `DATABASE_URL`, `GEMINI_API_KEY`, `GEMINI_MODEL`, `CRICKETDATA_API_KEY`, `CRICKETDATA_MODE` (`live` in production),
-`APP_PASSCODE` (needed for anything that changes data; visitors are view-only), `CRON_SECRET` (daily refresh).
+`APP_PASSCODE` (optional; left empty there is no passcode, because the link is private to Aryan), `CRON_SECRET` (daily refresh).
 
 ## Limitations
 
