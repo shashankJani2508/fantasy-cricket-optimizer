@@ -33,3 +33,15 @@ export function venueText(venue?: string | null, city?: string | null) {
   const v = [venue, city].filter((x) => x && !/^tbc$/i.test(x.trim())).join(", ");
   return v && !/^tbc/i.test(v) ? v : "Venue not announced yet";
 }
+
+/** Domestic match inside one country: a silk-like painted flag (drawn in CSS, no photos). India for now. */
+export function homeArt(country?: string | null) {
+  if (country !== "India") return null;
+  return {
+    backgroundImage: [
+      "linear-gradient(to bottom, transparent 40%, rgba(10,11,16,0.92) 90%)",
+      "repeating-linear-gradient(115deg, rgba(255,255,255,0.10) 0 40px, rgba(0,0,0,0.12) 40px 90px, rgba(255,255,255,0.06) 90px 140px)",
+      "linear-gradient(to bottom, #FF9933 0%, #F7A44A 30%, #FFFFFF 34%, #F4F4F4 63%, #138808 67%, #0F6E07 100%)",
+    ].join(","),
+  } as React.CSSProperties;
+}

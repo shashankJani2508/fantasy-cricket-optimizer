@@ -4,7 +4,7 @@ import { Check, CloudRain, MapPin, Users, X } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { api, Match, Star } from "@/lib/api";
-import { matchArt, ring, splitSeries, venueText } from "@/lib/teams";
+import { homeArt, matchArt, ring, splitSeries, venueText } from "@/lib/teams";
 import { Chip, countdown, ErrorNote, haptic, localTime, Skeleton, TeamBadge, useAuth, useSnack } from "@/components/ui";
 import { SetupSheet } from "@/components/SetupSheet";
 
@@ -147,7 +147,7 @@ function SwipeDeck({ cards, onChoose }: { cards: Card[]; onChoose: (m: Card, c: 
   return (
     <div>
       <div className="relative h-[clamp(340px,calc(100vh-420px),520px)] md:h-[560px]">
-        {cards[1] && <motion.div className="absolute inset-0" style={{ scale: nextScale }} aria-hidden><FixtureCard m={cards[1]} /></motion.div>}
+        {cards[1] && <motion.div className="absolute inset-0 rounded-card bg-surface shadow-card" style={{ scale: nextScale }} aria-hidden />}
         <motion.div key={top.id} className="absolute inset-0 cursor-grab touch-pan-y active:cursor-grabbing" style={{ x, rotate }}
           drag="x" dragConstraints={{ left: 0, right: 0 }} dragElastic={0.9}
           onDragEnd={(_, i) => { if (i.offset.x > 120) commit("play"); else if (i.offset.x < -120) commit("skip"); }}>
@@ -182,7 +182,7 @@ function FixtureCard({ m }: { m: Card }) {
   return (
     <div style={{ perspective: 1000 }} className="h-full">
       <motion.article onPointerMove={tilt} onPointerLeave={() => { rx.set(0); ry.set(0); }}
-        style={{ rotateX: rx, rotateY: ry, transformStyle: "preserve-3d", ...matchArt(m.team_a?.colour, m.team_b?.colour) }}
+        style={{ rotateX: rx, rotateY: ry, transformStyle: "preserve-3d", ...((m.team_a?.country && m.team_a.country === m.team_b?.country && homeArt(m.team_a.country)) || matchArt(m.team_a?.colour, m.team_b?.colour)) }}
         className="noise relative flex h-full select-none flex-col overflow-hidden rounded-card p-5 shadow-card" aria-label={`${m.team_a?.name} vs ${m.team_b?.name}`}>
         <Stars list={stars(m.team_a)} side="left" />
         <Stars list={stars(m.team_b)} side="right" />
