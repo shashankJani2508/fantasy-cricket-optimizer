@@ -133,6 +133,7 @@ function nextSteps(warnings: string[]) {
   for (const w of warnings) {
     if (w.startsWith("XI not confirmed")) out.push("XI not confirmed: rebuild after the toss");
     else if (w.startsWith("News not checked")) out.push("News not checked: check team news before you lock your team");
+    else if (w.startsWith("Check this yourself")) out.push(w.replace("Check this yourself: ", ""));
     else if (w.startsWith("Rain forecast") || w.includes("thin data") || w.startsWith("Gemini wanted")) out.push(w);
   }
   return Array.from(new Set(out));

@@ -27,7 +27,8 @@ Gemini (model: Gemini 3.5 Flash, via the Gemini API) has four jobs: **moderator*
 - The venue's pitch type as already counted by the rubric (batting- or bowling-friendly).
 - Open-Meteo forecast for the venue at match time (rain chance, dew point, humidity).
 - **Today's news from Google News RSS** (main source, added 13 Oct 2026): our code (`engine/sources/news_rss.py`) runs one search feed per match and one per team (team names + "team news", "squad", "injury", "playing XI"), keeps items from the last 48 hours that mention a pooled player, either team or the venue, removes near-duplicate headlines, keeps at most 20, saves them in Neon `news_items` (feeds cached 2 hours; full articles are never fetched) and passes them to Gemini as a numbered list.
-- **Backup:** only when the feeds give no relevant items, Google Search grounding is enabled instead (also for the pitch report). Each adjustment records its path (`rss` or `grounding`).
+- **Google Search grounding on every run** (changed 13 Oct 2026), in the same call as the RSS list, for team news and the pitch report.
+- Every adjustment cites its source: `source_type: rss` + the news item id, or `source_type: search` + the exact link of a grounding source of that same call (dew differences may rest on the Open-Meteo forecast we send). News older than 48 hours before the start is ignored when a date is known. The same news from both sources gives one adjustment; conflicting sources (e.g. fit vs ruled out) give no adjustment and a "Check this yourself" warning naming the player.
 
 **Rules:**
 
@@ -53,9 +54,12 @@ Gemini (model: Gemini 3.5 Flash, via the Gemini API) has four jobs: **moderator*
       "reason": "one line",
       "reason_type": "injury | batting_order | bowling_role | pitch_differs | dew_differs",
       "source_url": "https://... (required for news-based reasons)",
-      "news_item_id": 12
+      "source_type": "rss | search",
+      "news_item_id": 12,
+      "published_at": "2026-10-13T08:00:00Z (if known)"
     }
   ],
+  "conflicts": [{"player_id": "string", "note": "fit vs ruled out"}],
   "pitch_note": "one line: what today's pitch report says, or 'no pitch report found'",
   "news_checked": true
 }
@@ -63,7 +67,9 @@ Gemini (model: Gemini 3.5 Flash, via the Gemini API) has four jobs: **moderator*
 
 **Code checks after the moderator:**
 - Every player_id is in the allowed pool; otherwise reject that adjustment.
-- RSS path: every adjustment except dew must give a `news_item_id` that exists in the list sent; the stored source link is that item's link. Otherwise reject.
+- `source_type: rss`: the `news_item_id` must exist in the list sent (the stored link is ours). `source_type: search`: the `source_url` must appear in this call's grounding sources (`groundingMetadata.groundingChunks[].web.uri`, TODO-CONFIRM against a real grounded response). Otherwise reject and log.
+- Older than 48 h before the start: reject. Two adjustments for one player in the same direction: keep one. Opposite directions or listed in `conflicts`: none, plus a warning.
+- Cited search results are saved in `search_sources`; each adjustment records `source_type`.
 - change_percent within -20 to +20; otherwise clip it to the limit and raise the warning "Gemini wanted to go beyond ±20%".
 - reason present; source_url present for injury, batting_order and bowling_role reasons; otherwise reject.
 - Adjusted score = base score × (1 + change_percent/100). Both scores and the adjustment are saved to Neon `gemini_adjustments`.

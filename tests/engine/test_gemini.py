@@ -34,23 +34,55 @@ def test_recorded_responses_parse():
     assert out["adjustments"] == [] and out["pitch_note"] and errors == []
 
 
-def test_moderator_checks():
-    pool = {"a", "b", "c", "d"}
-    d = {"adjustments": [
-        {"player_id": "a", "change_percent": 35, "reason": "pitch greener than usual", "reason_type": "pitch_differs"},
-        {"player_id": "zz", "change_percent": 5, "reason": "x", "reason_type": "injury", "source_url": "https://x"},
-        {"player_id": "b", "change_percent": -10, "reason": "hamstring", "reason_type": "injury"},
-        {"player_id": "c", "change_percent": -15, "reason": "ruled out", "reason_type": "injury",
-         "source_url": "https://news.example/c"},
-        {"player_id": "c", "change_percent": 10, "reason": "again", "reason_type": "pitch_differs"},
-        {"player_id": "d", "change_percent": 5, "reason": "famous", "reason_type": "reputation"}],
-        "pitch_note": "dry", "news_checked": True}
-    out, errors, retry = check_moderator(d, pool, 20)
-    got = {a["player_id"]: a for a in out["adjustments"]}
+SRC = [{"uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/abc", "title": "pcb.com.pk"}]
+NEWS = {7: {"link": "https://news.google.com/rss/articles/x", "published_at": None}}
+
+
+def mod(adjs, conflicts=(), sources=SRC, start=None):
+    d = {"adjustments": adjs, "conflicts": [{"player_id": c} for c in conflicts], "pitch_note": "dry", "news_checked": True,
+         "_sources": sources}
+    return check_moderator(d, {"a", "b", "c", "d"}, 20, NEWS, start)
+
+
+def test_moderator_caps_and_needs_a_cited_source():
+    out, errors, retry = mod([
+        {"player_id": "a", "change_percent": 35, "reason": "pitch greener than usual", "reason_type": "pitch_differs",
+         "source_type": "search", "source_url": SRC[0]["uri"]},
+        {"player_id": "zz", "change_percent": 5, "reason": "x", "reason_type": "injury", "news_item_id": 7, "source_type": "rss"},
+        {"player_id": "b", "change_percent": -10, "reason": "hamstring", "reason_type": "injury", "source_type": "search",
+         "source_url": "https://made.up/story"},
+        {"player_id": "c", "change_percent": -15, "reason": "ruled out", "reason_type": "injury", "source_type": "rss", "news_item_id": 7},
+        {"player_id": "d", "change_percent": 5, "reason": "famous", "reason_type": "reputation"}])
+    got = {x["player_id"]: x for x in out["adjustments"]}
     assert set(got) == {"a", "c"} and not retry
-    assert got["a"]["applied_pct"] == 20 and got["a"]["clipped"] and got["a"]["requested_pct"] == 35
-    assert got["c"]["applied_pct"] == -15 and not got["c"]["clipped"]
-    assert len(errors) == 4   # zz not in pool, b no source, c twice, d banned reason type
+    assert got["a"]["applied_pct"] == 20 and got["a"]["clipped"] and got["a"]["source_type"] == "search"
+    assert got["c"]["source_url"] == NEWS[7]["link"] and got["c"]["source_type"] == "rss"
+    assert any("made.up" in e and "search sources" in e for e in errors)
+
+
+def test_duplicate_news_gives_one_adjustment():
+    out, errors, _ = mod([
+        {"player_id": "a", "change_percent": -10, "reason": "ruled out", "reason_type": "injury", "source_type": "rss", "news_item_id": 7},
+        {"player_id": "a", "change_percent": -12, "reason": "ruled out", "reason_type": "injury", "source_type": "search",
+         "source_url": SRC[0]["uri"]}])
+    assert [x["source_type"] for x in out["adjustments"]] == ["rss"] and any("duplicate" in e for e in errors)
+
+
+def test_conflicting_news_gives_no_adjustment_and_a_warning():
+    out, _, _ = mod([
+        {"player_id": "a", "change_percent": -15, "reason": "ruled out", "reason_type": "injury", "source_type": "rss", "news_item_id": 7},
+        {"player_id": "a", "change_percent": 5, "reason": "declared fit", "reason_type": "injury", "source_type": "search",
+         "source_url": SRC[0]["uri"]},
+        {"player_id": "b", "change_percent": -10, "reason": "doubtful", "reason_type": "injury", "source_type": "rss", "news_item_id": 7}],
+        conflicts=["b"])
+    assert out["adjustments"] == [] and sorted(out["conflicts"]) == ["a", "b"]
+
+
+def test_old_news_is_ignored():
+    out, errors, _ = mod([{"player_id": "a", "change_percent": -10, "reason": "injured", "reason_type": "injury",
+                           "source_type": "search", "source_url": SRC[0]["uri"], "published_at": "2026-10-01T09:00:00Z"}],
+                         start="2026-10-13 13:00:00+00:00")
+    assert out["adjustments"] == [] and any("older than 48 hours" in e for e in errors)
 
 
 def _expl(cap="c1", generic=False):

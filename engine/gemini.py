@@ -29,12 +29,15 @@ PROMPTS = {
         "You are the moderator for a fantasy cricket scoring engine. You receive each allowed player's base score, "
         "calculated from statistics. Your only job is to adjust scores for information the statistics cannot see: "
         "injury or fitness news, a confirmed batting-order or bowling-role change, or today's pitch or dew where it "
-        "differs from the venue's usual type, which the statistics already count. Search for today's team news and "
-        "pitch report. You may change a score by at most 20% up or down, and only with a one-line reason; news-based "
-        "reasons must include the source link. Never adjust for reputation or popularity. Never invent facts. If you "
-        "find nothing reliable, make no adjustment and say \"no news found\". When a numbered list of news items is "
-        "provided, news-based adjustments may use only those items: return the item's id as news_item_id and its link as "
-        "source_url. Return JSON only, using the schema provided."),
+        "differs from the venue's usual type, which the statistics already count. You get a numbered list of news items "
+        "and you can also search Google for today's team news and pitch report. Every adjustment must cite its source: "
+        "either source_type \"rss\" with the news item's id, or source_type \"search\" with the exact link of a search "
+        "result you used. Give the news date as published_at when known; ignore news older than 48 hours before the "
+        "start. If two sources report the same news for a player, make one adjustment. If sources disagree about a "
+        "player (for example fit vs ruled out), make no adjustment for him and list him in conflicts. You may change a "
+        "score by at most 20% up or down, and only with a one-line reason. Never adjust for reputation or popularity. "
+        "Never invent facts. If you find nothing reliable, make no adjustment and say \"no news found\". Return JSON "
+        "only, using the schema provided."),
     "explainer": (
         "You explain a fantasy cricket team to its owner, who must be able to defend each pick to his league group. "
         "You receive the final team, captain, vice-captain, four left-out players and the numbers behind each. Write "
@@ -55,7 +58,7 @@ PROMPTS = {
         "the schema provided."),
 }
 
-PROMPT_VERSION = {"moderator": 2, "explainer": 1, "analyst": 1, "screenshot": 1}   # moderator v2: news items
+PROMPT_VERSION = {"moderator": 3, "explainer": 1, "analyst": 1, "screenshot": 1}   # moderator v2: news items
 _S, _N, _I = {"type": "string"}, {"type": "number"}, {"type": "integer"}
 _line = {"type": "object", "properties": {"player_id": _S, "reason": _S}, "required": ["player_id", "reason"]}
 SCHEMAS = {
@@ -63,8 +66,11 @@ SCHEMAS = {
         "adjustments": {"type": "array", "items": {"type": "object", "properties": {
             "player_id": _S, "change_percent": _N, "reason": _S,
             "reason_type": {"type": "string", "enum": sorted(REASON_TYPES)}, "source_url": _S,
-            "news_item_id": {"type": ["integer", "null"]}},
+            "source_type": {"type": "string", "enum": ["rss", "search"]}, "news_item_id": {"type": ["integer", "null"]},
+            "published_at": {"type": ["string", "null"]}},
             "required": ["player_id", "change_percent", "reason", "reason_type"]}},
+        "conflicts": {"type": "array", "items": {"type": "object", "properties": {"player_id": _S, "note": _S},
+                                                 "required": ["player_id"]}},
         "pitch_note": _S, "news_checked": {"type": "boolean"}},
         "required": ["adjustments", "pitch_note", "news_checked"]},
     "explainer": {"type": "object", "properties": {
@@ -110,7 +116,9 @@ def response_text(resp):
     c = (resp.get("candidates") or [{}])[0]
     text = "".join(p.get("text", "") for p in (c.get("content") or {}).get("parts", []) if not p.get("thought"))
     chunks = (c.get("groundingMetadata") or {}).get("groundingChunks") or []
-    return text, [ch["web"]["uri"] for ch in chunks if ch.get("web", {}).get("uri")]
+    # TODO-CONFIRM: field names from Google's API reference (GroundingMetadata.groundingChunks[].web.uri / .title);
+    # no real grounded response saved yet (search quota exhausted on 13 Oct 2026).
+    return text, [{"uri": ch["web"]["uri"], "title": ch["web"].get("title")} for ch in chunks if ch.get("web", {}).get("uri")]
 
 
 class Gemini:
@@ -179,15 +187,16 @@ class Gemini:
     # Job 1
     def moderate(self, players, match, forecast=None, cap=20, run_id=None, news=None):
         """players: [{"player_id","name","team","base_score","factors","trust","thin_data"}]. news: saved news_items
-        rows; when given, Gemini reads only those (no search). With none, Google Search grounding is the backup."""
+        rows. Google Search grounding is on in the same call; every adjustment must cite an item id or a grounding link."""
         body = {"match": match, "forecast": forecast or "not available", "players": players}
         if news:
             body["news_items"] = [{"id": n["id"], "title": n["title"], "snippet": n["snippet"], "source": n["source_name"],
                                    "published": str(n["published_at"]), "link": n["link"]} for n in news]
-        links = {n["id"]: n["link"] for n in news} if news else None
+        items = {n["id"]: n for n in news or []}
+        start = match.get("start_time_utc")
         return self.call("moderator", json.dumps(body, default=str),
-                         lambda d: check_moderator(d, {p["player_id"] for p in players}, cap, links),
-                         search=not news, run_id=run_id, summary=f"moderate {match.get('id')} {len(players)} players")
+                         lambda d: check_moderator(d, {p["player_id"] for p in players}, cap, items, start),
+                         search=True, run_id=run_id, summary=f"moderate {match.get('id')} {len(players)} players")
 
     # Job 2
     def explain(self, payload, run_id=None):
@@ -214,49 +223,79 @@ class Gemini:
                          images=images, summary=f"screenshot {kind} x{len(images)}")
 
 
-def check_moderator(d, pool, cap, news=None):
-    """news: {news_item_id: link} when the RSS path was used. Then every adjustment except dew (Open-Meteo) must cite
-    an id from that list, and the source link stored is ours, not Gemini's."""
-    errors, out, seen = [], [], set()
+def _when(x):
+    import datetime as dt
+    if not x:
+        return None
+    try:
+        t = dt.datetime.fromisoformat(str(x).replace("Z", "+00:00"))
+        return t if t.tzinfo else t.replace(tzinfo=dt.timezone.utc)
+    except ValueError:
+        return None
+
+
+def check_moderator(d, pool, cap, news=None, start=None):
+    """news: {news_item_id: {"link", "published_at", ...}} sent in the call; the grounding sources of the same call are
+    in d["_sources"]. Each adjustment must cite an RSS id from `news` or a link that appears in those grounding sources
+    (dew differs is from Open-Meteo data we sent). News older than 48 h before `start` is ignored. Same news from two
+    sources gives one adjustment; conflicting news gives none plus a warning."""
+    import datetime as dt
+    news = news or {}
+    search = {s["uri"]: s for s in d.get("_sources") or [] if isinstance(s, dict)}
+    t0 = _when(start)
+    errors, kept, warnings = [], {}, []
     if not isinstance(d.get("adjustments"), list):
         return None, ["adjustments missing"], True
+    conflicted = {c.get("player_id") for c in d.get("conflicts") or [] if c.get("player_id") in pool}
     for a in d["adjustments"]:
         pid = a.get("player_id")
         if pid not in pool:
             errors.append(f"rejected {pid}: not in the allowed pool")
             continue
-        if pid in seen:
-            errors.append(f"rejected second adjustment for {pid}")
-            continue
-        rt, reason, url = a.get("reason_type"), (a.get("reason") or "").strip(), (a.get("source_url") or "").strip()
+        rt, reason = a.get("reason_type"), (a.get("reason") or "").strip()
         if rt not in REASON_TYPES or not reason:
             errors.append(f"rejected {pid}: reason or reason type missing")
-            continue
-        nid = a.get("news_item_id")
-        if news is not None and rt != "dew_differs":
-            if nid not in news:
-                errors.append(f"rejected {pid}: news item {nid} is not in the list given")
-                continue
-            url = news[nid]
-        elif rt in NEEDS_SOURCE and not re.match(r"https?://", url):
-            errors.append(f"rejected {pid}: {rt} needs a source link")
             continue
         try:
             req = float(a.get("change_percent"))
         except (TypeError, ValueError):
             errors.append(f"rejected {pid}: change_percent not a number")
             continue
-        applied = max(-cap, min(cap, req))
         if req == 0:
             continue
-        seen.add(pid)
-        out.append({"player_id": pid, "requested_pct": req, "applied_pct": applied, "clipped": applied != req,
-                    "reason": reason, "reason_type": rt, "source_url": url or None,
-                    "news_item_id": nid if news is not None and nid in news else None,
-                    "news_path": "rss" if news is not None else "grounding"})
-    clean = {"adjustments": out, "pitch_note": d.get("pitch_note") or "no pitch report found",
-             "news_checked": bool(d.get("news_checked")), "sources": d.get("_sources", []),
-             "path": "rss" if news is not None else "grounding"}
+        st, nid, url, published = a.get("source_type"), a.get("news_item_id"), (a.get("source_url") or "").strip(), None
+        if rt == "dew_differs" and not url and nid is None:
+            st = "forecast"
+        elif st == "rss" or (nid is not None and st != "search"):
+            if nid not in news:
+                errors.append(f"rejected {pid}: news item {nid} is not in the list sent")
+                continue
+            st, url, published = "rss", news[nid]["link"], news[nid].get("published_at")
+        else:
+            if url not in search:
+                errors.append(f"rejected {pid}: {url or 'no link'} is not among this call's search sources")
+                continue
+            st, nid, published = "search", None, _when(a.get("published_at"))
+        if t0 and published and published < t0 - dt.timedelta(hours=48):
+            errors.append(f"rejected {pid}: news from {published:%d %b} is older than 48 hours before the start")
+            continue
+        applied = max(-cap, min(cap, req))
+        adj = {"player_id": pid, "requested_pct": req, "applied_pct": applied, "clipped": applied != req, "reason": reason,
+               "reason_type": rt, "source_url": url or None, "source_type": st, "news_item_id": nid,
+               "search_title": search.get(url, {}).get("title") if st == "search" else None}
+        if pid in kept:
+            if (kept[pid]["applied_pct"] > 0) != (applied > 0):
+                conflicted.add(pid)
+            else:
+                errors.append(f"duplicate news for {pid}: one adjustment kept")
+            continue
+        kept[pid] = adj
+    for pid in conflicted:
+        kept.pop(pid, None)
+        warnings.append(pid)
+        errors.append(f"conflicting news for {pid}: no adjustment")
+    clean = {"adjustments": list(kept.values()), "pitch_note": d.get("pitch_note") or "no pitch report found",
+             "news_checked": bool(d.get("news_checked")), "sources": list(search.values()), "conflicts": warnings}
     return clean, errors, False
 
 

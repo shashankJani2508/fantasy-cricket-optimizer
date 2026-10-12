@@ -10,7 +10,7 @@ from engine.env import env
 pytestmark = pytest.mark.skipif(not env("DATABASE_URL"), reason="DATABASE_URL not set")
 MID = "test:m1"
 ROLES = ["WK"] + ["BAT"] * 4 + ["AR"] * 2 + ["BOWL"] * 4
-CLEAN = ["explanations", "bench", "teams_picked", "gemini_adjustments", "gemini_calls", "predictions", "overrides"]
+CLEAN = ["explanations", "bench", "teams_picked", "gemini_adjustments", "search_sources", "news_items", "gemini_calls", "predictions", "overrides"]
 
 
 @pytest.fixture
@@ -73,8 +73,13 @@ class Replay:
             if self.fail:
                 raise OSError("timeout")
             pid = data["players"][0]["player_id"]
-            return wrap({"adjustments": [{"player_id": pid, "change_percent": 30, "reason": "pitch drier than usual",
-                                          "reason_type": "pitch_differs"}], "pitch_note": "dry", "news_checked": True})
+            uri = "https://vertexaisearch.cloud.google.com/grounding-api-redirect/test"
+            r = wrap({"adjustments": [{"player_id": pid, "change_percent": 30, "reason": "pitch drier than usual",
+                                       "reason_type": "pitch_differs", "source_type": "search", "source_url": uri}],
+                      "pitch_note": "dry", "news_checked": True})
+            # grounding metadata in the shape of Google's API reference (groundingChunks[].web.uri/title)
+            r["candidates"][0]["groundingMetadata"] = {"groundingChunks": [{"web": {"uri": uri, "title": "pcb.com.pk"}}]}
+            return r
         line = lambda p: {"player_id": p["player_id"], "reason": f"Expected {p['adjusted_score']} at this venue"}
         cap = next(p for p in data["team"] if p["player_id"] == data["captain_id"])
         vc = next(p for p in data["team"] if p["player_id"] == data["vc_id"])
@@ -99,6 +104,7 @@ def test_full_run_to_done(store, monkeypatch):
     assert len(team[0]) == 11 and team[3]
     adj = store.q("SELECT applied_pct, clipped FROM gemini_adjustments WHERE run_id = %s", (rid,))
     assert adj == [(20.0, True)]
+    assert store.one("SELECT count(*) FROM search_sources WHERE run_id = %s", (rid,)) == 1
     scores = dict(store.q("SELECT player_id, adjusted_score FROM predictions WHERE run_id = %s", (rid,)))
     assert team[1] == max(team[0], key=lambda p: scores[p])
     assert store.one("SELECT count(*) FROM bench WHERE run_id = %s", (rid,)) == 4

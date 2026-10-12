@@ -82,13 +82,12 @@ def test_feed_cached_two_hours():
 
 def test_moderator_rejects_news_id_not_in_list():
     d = {"adjustments": [
-        {"player_id": "a", "change_percent": -10, "reason": "ruled out", "reason_type": "injury", "news_item_id": 7},
-        {"player_id": "b", "change_percent": -10, "reason": "hamstring", "reason_type": "injury", "news_item_id": 99,
-         "source_url": "https://made.up/link"},
+        {"player_id": "a", "change_percent": -10, "reason": "ruled out", "reason_type": "injury", "source_type": "rss", "news_item_id": 7},
+        {"player_id": "b", "change_percent": -10, "reason": "hamstring", "reason_type": "injury", "source_type": "rss", "news_item_id": 99},
         {"player_id": "c", "change_percent": 5, "reason": "heavy dew expected", "reason_type": "dew_differs"}],
-        "pitch_note": "no pitch report found", "news_checked": True}
-    out, errors, _ = check_moderator(d, {"a", "b", "c"}, 20, {7: "https://news.google.com/rss/articles/x"})
+        "pitch_note": "no pitch report found", "news_checked": True, "_sources": []}
+    out, errors, _ = check_moderator(d, {"a", "b", "c"}, 20, {7: {"link": "https://news.google.com/rss/articles/x", "published_at": None}})
     got = {a["player_id"]: a for a in out["adjustments"]}
-    assert set(got) == {"a", "c"} and out["path"] == "rss"
+    assert set(got) == {"a", "c"} and got["c"]["source_type"] == "forecast"
     assert got["a"]["source_url"] == "https://news.google.com/rss/articles/x" and got["a"]["news_item_id"] == 7
     assert any("99" in e for e in errors)

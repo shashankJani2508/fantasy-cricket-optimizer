@@ -141,6 +141,7 @@ def predictions(store, rid):
 def step_moderating(store, rid, run, gemini, forecast_fn, news_fn=news_for_match):
     store.q("DELETE FROM gemini_adjustments WHERE run_id = %s RETURNING id", (rid,))
     store.q("DELETE FROM news_items WHERE run_id = %s RETURNING id", (rid,))
+    store.q("DELETE FROM search_sources WHERE run_id = %s RETURNING id", (rid,))
     preds, lst = predictions(store, rid), aryan_list(store, run["match_id"])
     fc = forecast_fn(store, run["venue_id"], run["venue"], run["start_time"], run["city"])
     if fc and fc["rain_chance_pct"] is not None and fc["rain_chance_pct"] >= RAIN_WARN_PCT:
@@ -166,24 +167,31 @@ def step_moderating(store, rid, run, gemini, forecast_fn, news_fn=news_for_match
             news = []
     try:
         out, errors = gemini.moderate(players, match, fc, cap=cap, run_id=rid, news=news)
+        if not out["news_checked"] and not out["adjustments"] and not news:
+            _warn(store, rid, "News not checked: no team news was found or read")
     except GeminiFailed:
         _warn(store, rid, "News not checked: Gemini did not answer, scores are unadjusted")
         _set(store, rid, "optimizing")
         return
+    names = {p["player_id"]: p["name"] for p in players}
+    for pid in out.get("conflicts", []):
+        _warn(store, rid, f"Check this yourself: news about {names.get(pid, pid)} conflicts (fit vs not fit)")
     if any(a["clipped"] for a in out["adjustments"]):
         _warn(store, rid, "Gemini wanted to go beyond ±20%")
     for a in out["adjustments"]:
+        sid = store.one("""INSERT INTO search_sources (run_id, title, link, source_name) VALUES (%s, %s, %s, %s)
+                           RETURNING id""", (rid, a["search_title"], a["source_url"], None)) if a["source_type"] == "search" else None
         store.q("""INSERT INTO gemini_adjustments (run_id, player_id, requested_pct, applied_pct, clipped, reason,
-                   reason_type, source_url, news_item_id, news_path)
-                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id""",
+                   reason_type, source_url, news_item_id, source_type, search_source_id)
+                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id""",
                 (rid, a["player_id"], a["requested_pct"], a["applied_pct"], a["clipped"], a["reason"], a["reason_type"],
-                 a["source_url"], a.get("news_item_id"), a.get("news_path")))
+                 a["source_url"], a.get("news_item_id"), a["source_type"], sid))
         store.q("""UPDATE predictions SET gemini_change_pct = %s, adjusted_score = base_score * (1 + %s / 100.0)
                    WHERE run_id = %s AND player_id = %s RETURNING id""", (a["applied_pct"], a["applied_pct"], rid,
                                                                          a["player_id"]))
     log(store, "gemini", "moderated", run["match_id"],
         {"run_id": rid, "adjustments": len(out["adjustments"]), "pitch_note": out["pitch_note"],
-         "news_checked": out["news_checked"], "rejected": errors, "news_path": out.get("path"),
+         "news_checked": out["news_checked"], "rejected": errors, "search_sources": len(out.get("sources", [])), "conflicts": out.get("conflicts", []),
          "news_items": len(news)})
     _set(store, rid, "optimizing")
 
