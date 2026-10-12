@@ -22,7 +22,7 @@ you approve or reject.
 - **CricketData.org**: fixtures, squads, scorecards, player photos (cached; free tier 100 calls a day, the app stops at 95).
 - **Cricsheet**: ball-by-ball history and exact points.
 - **Open-Meteo**: rain chance, dew point and humidity at the venue (no key).
-- **Google News RSS** (fetched and filtered by our code) **+ Google Search through Gemini**: today's team news and pitch report, with source links. If the API key's search quota is exhausted, the moderator reads the RSS items only.
+- **Google News RSS** (fetched and filtered by our code) **+ Google Search through Gemini**: today's team news and pitch report, with source links.
 - **Dream11**: only through Aryan's screenshots or typing. The app never logs in to, scrapes or automates Dream11.
 
 ## Database: Neon
