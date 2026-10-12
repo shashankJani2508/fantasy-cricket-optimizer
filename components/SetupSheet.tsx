@@ -52,8 +52,7 @@ export function SetupSheet({ match, onClose }: { match: Match; onClose: (saved?:
       const skipped = r.rows.filter((x: any) => !x.player_id).map((x: any) => `${x.name_on_screen} (${x.skip_reason})`);
       const noCredits = next.filter((x) => x.out && read.has(x.player_id)).map((x) => `${x.name} (no credits on screenshot)`);
       setRows(next); setUnmatched([]); setTyping(true);
-      setNote([...skipped, ...noCredits].length ? [...skipped, ...noCredits].join("
-") : null);
+      setNote([...skipped, ...noCredits].length ? [...skipped, ...noCredits].join("\n") : null);
     } catch (e: any) { setErr(e.message); }
     setReading(false);
   };
@@ -96,10 +95,8 @@ export function SetupSheet({ match, onClose }: { match: Match; onClose: (saved?:
           {!typing && <button className="mx-auto block min-h-[44px] text-s14 font-semibold text-muted underline-offset-4 hover:underline" onClick={() => setTyping(true)}>Type instead</button>}
           {note && (
             <div className="rounded-tile bg-surface px-4 py-3 text-s12 text-muted">
-              <p className="mb-1 font-semibold text-ink">Left out automatically ({note.split("
-").length})</p>
-              <ul className="max-h-40 space-y-0.5 overflow-y-auto">{note.split("
-").map((l, i) => <li key={i}>• {l.replace("; left out", "")}</li>)}</ul>
+              <p className="mb-1 font-semibold text-ink">Left out automatically ({note.split("\n").length})</p>
+              <ul className="max-h-40 space-y-0.5 overflow-y-auto">{note.split("\n").map((l, i) => <li key={i}>• {l.replace("; left out", "")}</li>)}</ul>
             </div>
           )}
           {unmatched.map((u) => (
