@@ -79,7 +79,9 @@ Unique on (`player_id`, `match_id`). A `scorecard` row is replaced, not duplicat
 
 **predictions**: `id`, `run_id`, `player_id`, `factors` (jsonb), `trust` (jsonb), `fallback_step` (1–4), `fallback_note`, `thin_data` (bool), `provisional_inputs` (bool), `provisional_weights` (bool), `borrowed_from_group`, `base_score`, `gemini_change_pct`, `adjusted_score` (the last two are added in the Gemini phase)
 
-**gemini_adjustments**: `id`, `run_id`, `player_id`, `requested_pct`, `applied_pct`, `clipped` (bool), `reason`, `reason_type`, `source_url`, `helped` (bool, filled after results)
+**gemini_adjustments**: `id`, `run_id`, `player_id`, `requested_pct`, `applied_pct`, `clipped` (bool), `reason`, `reason_type`, `source_url`, `news_item_id` (nullable), `news_path` (`rss` / `grounding`), `helped` (bool, filled after results)
+
+**news_items**: `id`, `match_id`, `run_id`, `title`, `snippet`, `link`, `source_name`, `published_at`, `fetched_at` (Google News RSS items shown to the moderator)
 
 **gemini_calls**: `id`, `job`, `run_id` (nullable), `model`, `input_summary`, `output` (jsonb), `valid` (bool), `validation_errors` (jsonb), `latency_ms`, `created_at`
 

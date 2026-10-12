@@ -15,6 +15,7 @@ from engine.optimizer import NoValidTeam, best_team, bench as bench_of
 from engine.points import load_points_config
 from engine.score import ScoringFailed, score_match
 from engine.settings import Settings
+from engine.sources.news_rss import news_for_match
 from engine.sources.openmeteo import forecast_at
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -137,8 +138,9 @@ def predictions(store, rid):
 
 
 # step 3
-def step_moderating(store, rid, run, gemini, forecast_fn):
+def step_moderating(store, rid, run, gemini, forecast_fn, news_fn=news_for_match):
     store.q("DELETE FROM gemini_adjustments WHERE run_id = %s RETURNING id", (rid,))
+    store.q("DELETE FROM news_items WHERE run_id = %s RETURNING id", (rid,))
     preds, lst = predictions(store, rid), aryan_list(store, run["match_id"])
     fc = forecast_fn(store, run["venue_id"], run["venue"], run["start_time"], run["city"])
     if fc and fc["rain_chance_pct"] is not None and fc["rain_chance_pct"] >= RAIN_WARN_PCT:
@@ -156,8 +158,14 @@ def step_moderating(store, rid, run, gemini, forecast_fn):
              "start_time_utc": str(run["start_time"]), "venue_pitch_type_counted_by_rubric": pitch or "unknown",
              "run_type": run["run_type"]}
     cap = Settings(store).float("gemini_cap_percent")
+    news = []
+    if len(teams) == 2:
+        try:
+            news = news_fn(store, run["match_id"], rid, teams[0], teams[1], [p["name"] for p in players], run["venue"])
+        except Exception:   # feed unavailable: Gemini's Google Search grounding is the backup
+            news = []
     try:
-        out, errors = gemini.moderate(players, match, fc, cap=cap, run_id=rid)
+        out, errors = gemini.moderate(players, match, fc, cap=cap, run_id=rid, news=news)
     except GeminiFailed:
         _warn(store, rid, "News not checked: Gemini did not answer, scores are unadjusted")
         _set(store, rid, "optimizing")
@@ -166,15 +174,17 @@ def step_moderating(store, rid, run, gemini, forecast_fn):
         _warn(store, rid, "Gemini wanted to go beyond ±20%")
     for a in out["adjustments"]:
         store.q("""INSERT INTO gemini_adjustments (run_id, player_id, requested_pct, applied_pct, clipped, reason,
-                   reason_type, source_url) VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id""",
+                   reason_type, source_url, news_item_id, news_path)
+                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id""",
                 (rid, a["player_id"], a["requested_pct"], a["applied_pct"], a["clipped"], a["reason"], a["reason_type"],
-                 a["source_url"]))
+                 a["source_url"], a.get("news_item_id"), a.get("news_path")))
         store.q("""UPDATE predictions SET gemini_change_pct = %s, adjusted_score = base_score * (1 + %s / 100.0)
                    WHERE run_id = %s AND player_id = %s RETURNING id""", (a["applied_pct"], a["applied_pct"], rid,
                                                                          a["player_id"]))
     log(store, "gemini", "moderated", run["match_id"],
         {"run_id": rid, "adjustments": len(out["adjustments"]), "pitch_note": out["pitch_note"],
-         "news_checked": out["news_checked"], "rejected": errors})
+         "news_checked": out["news_checked"], "rejected": errors, "news_path": out.get("path"),
+         "news_items": len(news)})
     _set(store, rid, "optimizing")
 
 

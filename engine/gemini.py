@@ -32,7 +32,9 @@ PROMPTS = {
         "differs from the venue's usual type, which the statistics already count. Search for today's team news and "
         "pitch report. You may change a score by at most 20% up or down, and only with a one-line reason; news-based "
         "reasons must include the source link. Never adjust for reputation or popularity. Never invent facts. If you "
-        "find nothing reliable, make no adjustment and say \"no news found\". Return JSON only, using the schema provided."),
+        "find nothing reliable, make no adjustment and say \"no news found\". When a numbered list of news items is "
+        "provided, news-based adjustments may use only those items: return the item's id as news_item_id and its link as "
+        "source_url. Return JSON only, using the schema provided."),
     "explainer": (
         "You explain a fantasy cricket team to its owner, who must be able to defend each pick to his league group. "
         "You receive the final team, captain, vice-captain, four left-out players and the numbers behind each. Write "
@@ -53,13 +55,15 @@ PROMPTS = {
         "the schema provided."),
 }
 
+PROMPT_VERSION = {"moderator": 2, "explainer": 1, "analyst": 1, "screenshot": 1}   # moderator v2: news items
 _S, _N, _I = {"type": "string"}, {"type": "number"}, {"type": "integer"}
 _line = {"type": "object", "properties": {"player_id": _S, "reason": _S}, "required": ["player_id", "reason"]}
 SCHEMAS = {
     "moderator": {"type": "object", "properties": {
         "adjustments": {"type": "array", "items": {"type": "object", "properties": {
             "player_id": _S, "change_percent": _N, "reason": _S,
-            "reason_type": {"type": "string", "enum": sorted(REASON_TYPES)}, "source_url": _S},
+            "reason_type": {"type": "string", "enum": sorted(REASON_TYPES)}, "source_url": _S,
+            "news_item_id": {"type": ["integer", "null"]}},
             "required": ["player_id", "change_percent", "reason", "reason_type"]}},
         "pitch_note": _S, "news_checked": {"type": "boolean"}},
         "required": ["adjustments", "pitch_note", "news_checked"]},
@@ -120,11 +124,12 @@ class Gemini:
     def prompt(self, job):
         if self.store is None:
             return PROMPTS[job]
-        row = self.store.q("SELECT system_prompt FROM gemini_rules WHERE job = %s ORDER BY version DESC LIMIT 1", (job,))
-        if row:
+        row = self.store.q("SELECT system_prompt, version FROM gemini_rules WHERE job = %s ORDER BY version DESC LIMIT 1",
+                           (job,))
+        if row and row[0][1] >= PROMPT_VERSION[job]:
             return row[0][0]
-        self.store.q("INSERT INTO gemini_rules (job, system_prompt, version) VALUES (%s, %s, 1) RETURNING id",
-                     (job, PROMPTS[job]))
+        self.store.q("INSERT INTO gemini_rules (job, system_prompt, version) VALUES (%s, %s, %s) RETURNING id",
+                     (job, PROMPTS[job], PROMPT_VERSION[job]))
         return PROMPTS[job]
 
     def _log(self, job, run_id, summary, output, valid, errors, ms):
@@ -172,11 +177,17 @@ class Gemini:
         raise GeminiFailed(f"Gemini {job} failed after {1 + MAX_RETRIES} attempts ({last})")
 
     # Job 1
-    def moderate(self, players, match, forecast=None, cap=20, run_id=None):
-        """players: [{"player_id","name","team","base_score","factors","trust","thin_data"}]."""
-        text = json.dumps({"match": match, "forecast": forecast or "not available", "players": players}, default=str)
-        return self.call("moderator", text, lambda d: check_moderator(d, {p["player_id"] for p in players}, cap),
-                         search=True, run_id=run_id, summary=f"moderate {match.get('id')} {len(players)} players")
+    def moderate(self, players, match, forecast=None, cap=20, run_id=None, news=None):
+        """players: [{"player_id","name","team","base_score","factors","trust","thin_data"}]. news: saved news_items
+        rows; when given, Gemini reads only those (no search). With none, Google Search grounding is the backup."""
+        body = {"match": match, "forecast": forecast or "not available", "players": players}
+        if news:
+            body["news_items"] = [{"id": n["id"], "title": n["title"], "snippet": n["snippet"], "source": n["source_name"],
+                                   "published": str(n["published_at"]), "link": n["link"]} for n in news]
+        links = {n["id"]: n["link"] for n in news} if news else None
+        return self.call("moderator", json.dumps(body, default=str),
+                         lambda d: check_moderator(d, {p["player_id"] for p in players}, cap, links),
+                         search=not news, run_id=run_id, summary=f"moderate {match.get('id')} {len(players)} players")
 
     # Job 2
     def explain(self, payload, run_id=None):
@@ -203,7 +214,9 @@ class Gemini:
                          images=images, summary=f"screenshot {kind} x{len(images)}")
 
 
-def check_moderator(d, pool, cap):
+def check_moderator(d, pool, cap, news=None):
+    """news: {news_item_id: link} when the RSS path was used. Then every adjustment except dew (Open-Meteo) must cite
+    an id from that list, and the source link stored is ours, not Gemini's."""
     errors, out, seen = [], [], set()
     if not isinstance(d.get("adjustments"), list):
         return None, ["adjustments missing"], True
@@ -219,7 +232,13 @@ def check_moderator(d, pool, cap):
         if rt not in REASON_TYPES or not reason:
             errors.append(f"rejected {pid}: reason or reason type missing")
             continue
-        if rt in NEEDS_SOURCE and not re.match(r"https?://", url):
+        nid = a.get("news_item_id")
+        if news is not None and rt != "dew_differs":
+            if nid not in news:
+                errors.append(f"rejected {pid}: news item {nid} is not in the list given")
+                continue
+            url = news[nid]
+        elif rt in NEEDS_SOURCE and not re.match(r"https?://", url):
             errors.append(f"rejected {pid}: {rt} needs a source link")
             continue
         try:
@@ -232,9 +251,12 @@ def check_moderator(d, pool, cap):
             continue
         seen.add(pid)
         out.append({"player_id": pid, "requested_pct": req, "applied_pct": applied, "clipped": applied != req,
-                    "reason": reason, "reason_type": rt, "source_url": url or None})
+                    "reason": reason, "reason_type": rt, "source_url": url or None,
+                    "news_item_id": nid if news is not None and nid in news else None,
+                    "news_path": "rss" if news is not None else "grounding"})
     clean = {"adjustments": out, "pitch_note": d.get("pitch_note") or "no pitch report found",
-             "news_checked": bool(d.get("news_checked")), "sources": d.get("_sources", [])}
+             "news_checked": bool(d.get("news_checked")), "sources": d.get("_sources", []),
+             "path": "rss" if news is not None else "grounding"}
     return clean, errors, False
 
 
