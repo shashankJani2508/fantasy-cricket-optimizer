@@ -16,12 +16,12 @@ CLEAN = ["explanations", "bench", "teams_picked", "gemini_adjustments", "gemini_
 @pytest.fixture
 def store():
     from engine.db import PgStore
-    s = PgStore()
-    s.conn.execute("SET search_path TO dev")
+    s = PgStore(schema="dev")
     runs = "(SELECT id FROM runs WHERE match_id = %s)"
     for t in CLEAN:
         s.conn.execute(f"DELETE FROM {t} WHERE run_id IN {runs}", (MID,))
-    for sql in ["DELETE FROM runs WHERE match_id = %s", "DELETE FROM credits WHERE match_id = %s",
+    for sql in ["DELETE FROM metrics WHERE match_id = %s", "DELETE FROM player_match_points WHERE match_id = %s",
+                "DELETE FROM runs WHERE match_id = %s", "DELETE FROM credits WHERE match_id = %s",
                 "DELETE FROM match_xi WHERE match_id = %s", "DELETE FROM activity_log WHERE match_id = %s",
                 "DELETE FROM matches WHERE id = %s"]:
         s.conn.execute(sql, (MID,))
@@ -43,7 +43,9 @@ def store():
         c.executemany("INSERT INTO match_xi (match_id, team_id, player_id, source) VALUES (%s, %s, %s, 'squad')", xi)
         c.executemany("""INSERT INTO credits (match_id, player_id, credits, dream11_role, entered_via)
                          VALUES (%s, %s, %s, %s, 'typed')""", cr)
-    return s
+    yield s
+    s.conn.execute("SET search_path TO public")
+    s.conn.close()
 
 
 def fake_score(store, client, points, mid, pids, run_type, run_id=None, **k):
@@ -104,6 +106,15 @@ def test_full_run_to_done(store, monkeypatch):
     warnings = store.one("SELECT warnings FROM runs WHERE id = %s", (rid,))
     assert "Gemini wanted to go beyond ±20%" in warnings and any("XI not confirmed" in w for w in warnings)
     assert store.one("SELECT count(*) FROM gemini_calls WHERE run_id = %s", (rid,)) == 2
+
+    from engine.learning import compute_metrics
+    with store.conn.cursor() as c:
+        c.executemany("""INSERT INTO player_match_points (player_id, match_id, format_group, total_points, source,
+                         is_provisional) VALUES (%s, %s, 'T20_men', %s, 'scorecard', true)""",
+                      [(p, MID, (i * 7) % 60) for i, p in enumerate(sorted(scores))])
+    m = compute_metrics(store, MID)
+    assert m["perfect_points"] >= m["system_points"] and not m["points_final"] and m["captain_hit"] is not None
+    assert 0 < m["efficiency"] <= 1 and m["mae"] is not None
 
 
 def test_gemini_down_still_builds_a_team(store, monkeypatch):

@@ -2,6 +2,7 @@
 import json
 
 import psycopg
+import psycopg.sql
 from psycopg.types.json import Jsonb
 
 from backtest.parse import bat_band, normalise_venue
@@ -28,9 +29,11 @@ def derive_bowl_band(fmt, overs):
 
 
 class PgStore:
-    def __init__(self, url=None):
+    def __init__(self, url=None, schema="public"):
         self.conn = psycopg.connect(url or env("DATABASE_URL"), autocommit=True)
         self.conn.execute("SET TIME ZONE 'UTC'")
+        # always explicit: Neon's pooled connections can carry a previous client's search_path
+        self.conn.execute(psycopg.sql.SQL("SET search_path TO {}").format(psycopg.sql.Identifier(schema)))
 
     def q(self, sql, args=()):
         return self.conn.execute(sql, args).fetchall()
