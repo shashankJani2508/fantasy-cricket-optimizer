@@ -1,4 +1,5 @@
 "use client";
+import { Camera } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { api, Match, Role } from "@/lib/api";
@@ -17,6 +18,7 @@ export function SetupSheet({ match, onClose }: { match: Match; onClose: () => vo
   const [note, setNote] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [reading, setReading] = useState(false);
+  const [typing, setTyping] = useState(false);
   const [unmatched, setUnmatched] = useState<Unmatched[]>([]);
   const [saving, setSaving] = useState(false);
   const router = useRouter();
@@ -29,7 +31,6 @@ export function SetupSheet({ match, onClose }: { match: Match; onClose: () => vo
   }, [match.id]);
 
   const update = (id: string, patch: Partial<Row>) => setRows((rs) => rs && rs.map((r) => (r.player_id === id ? { ...r, ...patch } : r)));
-
   const upload = async (files: FileList | null) => {
     if (!files?.length) return;
     setReading(true); setErr(null);
@@ -42,11 +43,10 @@ export function SetupSheet({ match, onClose }: { match: Match; onClose: () => vo
         if (x.player_id) update(x.player_id, { role: x.role, credits: x.credits, via: "screenshot", unsure: x.unsure, from_last_match: false, out: false });
         else left.push(x);
       }
-      setUnmatched(left);
+      setUnmatched(left); setTyping(true);
     } catch (e: any) { setErr(e.message); }
     setReading(false);
   };
-
   const confirmLink = async (u: Unmatched, pid: string) => {
     try {
       await api("/players/link", { method: "POST", body: { player_id: pid, name_on_screen: u.link_name ?? u.name_on_screen } });
@@ -57,7 +57,6 @@ export function SetupSheet({ match, onClose }: { match: Match; onClose: () => vo
 
   const active = rows?.filter((r) => !r.out) ?? [];
   const complete = active.length >= 11 && active.every((r) => r.role && r.credits != null && r.credits > 0);
-
   const save = async () => {
     setSaving(true); setErr(null);
     try {
@@ -66,31 +65,34 @@ export function SetupSheet({ match, onClose }: { match: Match; onClose: () => vo
     } catch (e: any) { setErr(e.message); }
     setSaving(false);
   };
-
   const runType = match.xi_announced ? "post_toss" : "pre_toss";
+
   return (
-    <Sheet open onClose={onClose} title={step === 1 ? "Add credits and roles from Dream11" : "Build my team"} wide>
-      <p className="mb-3 text-s14 text-slate">{step} of 2 · {match.team_a?.code} vs {match.team_b?.code}</p>
+    <Sheet open onClose={onClose} title={step === 1 ? "Add credits and roles from Dream11" : "Build my team"}>
+      <div className="mb-4 flex items-center gap-2" aria-label={`Step ${step} of 2`}>
+        {[1, 2].map((s) => <span key={s} className={`h-1.5 rounded-full ${s === step ? "w-6 bg-red" : "w-1.5 bg-white/25"}`} />)}
+        <span className="ml-1 text-s12 text-muted">{step} of 2 · {match.team_a?.code} vs {match.team_b?.code}</span>
+      </div>
       {err && <div className="mb-3"><ErrorNote>{err}</ErrorNote></div>}
       {step === 1 && (
         <div className="space-y-4">
-          <div className="flex flex-wrap gap-3">
-            <label className={`inline-flex min-h-[44px] cursor-pointer items-center rounded-full bg-turf px-5 font-semibold text-white ${reading ? "opacity-50" : ""}`}>
-              {reading ? "Reading screenshot…" : "Upload Dream11 screenshot"}
-              <input type="file" accept="image/png,image/jpeg,image/webp" multiple className="sr-only" disabled={reading} onChange={(e) => upload(e.target.files)} />
-            </label>
-            <span className="self-center text-s14 text-slate">or type them in the table below</span>
-          </div>
-          {note && <p className="text-s12 text-slate">{note}</p>}
+          <label className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-card border-2 border-dashed border-white/15 bg-surface px-4 py-7 text-center transition hover:border-white/30 ${reading ? "opacity-60" : ""}`}>
+            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-surface2"><Camera size={22} strokeWidth={1.75} /></span>
+            <span className="font-semibold">{reading ? "Reading your screenshots…" : "Upload Dream11 screenshot"}</span>
+            <span className="text-s12 text-muted">The Preview screen shows credits; add the player list too for roles.</span>
+            <input type="file" accept="image/png,image/jpeg,image/webp" multiple className="sr-only" disabled={reading} onChange={(e) => upload(e.target.files)} />
+          </label>
+          {!typing && <button className="mx-auto block min-h-[44px] text-s14 font-semibold text-muted underline-offset-4 hover:underline" onClick={() => setTyping(true)}>Type instead</button>}
+          {note && <p className="text-s12 text-muted">{note}</p>}
           {unmatched.map((u) => (
-            <div key={u.name_on_screen} className="rounded-sheet bg-floodlight/25 p-3 text-s14">
-              <p>We couldn&apos;t match &lsquo;{u.name_on_screen}&rsquo;. {u.suggestions.length ? "Is this one of these?" : "Who is it?"}</p>
-              <div className="mt-2 flex flex-wrap gap-2">
+            <div key={u.link_name ?? u.name_on_screen} className="rounded-tile border-l-4 border-amber bg-surface p-4 text-s14">
+              <p>We couldn&apos;t match &lsquo;{u.name_on_screen}&rsquo;{u.role ? ` (${u.role})` : ""}. {u.suggestions.length ? "Is this one of these?" : "Who is it?"}</p>
+              <div className="mt-3 flex flex-wrap gap-2">
                 {u.suggestions.map((pid) => {
                   const r = rows?.find((x) => x.player_id === pid);
-                  return r && <Button key={pid} kind="quiet" onClick={() => confirmLink(u, pid)}>Yes, {r.name} ({r.team_code})</Button>;
+                  return r && <Button key={pid} kind="quiet" className="!min-h-[40px] !px-4 text-s14" onClick={() => confirmLink(u, pid)}>Yes, {r.name}</Button>;
                 })}
-                <select aria-label={`Choose the player for ${u.name_on_screen}`} className="min-h-[44px] rounded-input border border-fg/10 bg-surface px-2"
+                <select aria-label={`Choose the player for ${u.name_on_screen}`} className="min-h-[40px] rounded-full bg-surface2 px-3 text-s14"
                   defaultValue="" onChange={(e) => e.target.value && confirmLink(u, e.target.value)}>
                   <option value="">Choose another…</option>
                   {rows?.map((r) => <option key={r.player_id} value={r.player_id}>{r.name} ({r.team_code})</option>)}
@@ -98,45 +100,46 @@ export function SetupSheet({ match, onClose }: { match: Match; onClose: () => vo
               </div>
             </div>
           ))}
-          {!rows ? <div className="space-y-2">{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-12" />)}</div> : rows.length === 0 ? (
+          {(typing || active.some((r) => r.credits != null)) && (!rows ? <div className="space-y-2">{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-14" />)}</div> : rows.length === 0 ? (
             <ErrorNote>No squad is available for this match yet. Try again closer to the start.</ErrorNote>
           ) : (
-            <table className="w-full text-s14">
-              <thead className="text-left text-s12 text-slate"><tr><th className="py-2">Player</th><th>Role</th><th>Credits</th><th><span className="sr-only">In list</span></th></tr></thead>
-              <tbody>
-                {rows.map((r) => (
-                  <tr key={r.player_id} className={`border-t border-fg/10 ${r.unsure ? "bg-floodlight/25" : ""} ${r.out ? "opacity-40" : ""}`}>
-                    <td className="py-2">
-                      <div className="flex items-center gap-2">
-                        <PlayerAvatar name={r.name} url={r.image_url} colour={r.colour} size={32} />
-                        <div><div>{r.name}</div><div className="text-s12 text-slate">{r.team_code}{r.unsure && " · Check this"}{r.from_last_match && " · from last match"}</div></div>
-                      </div>
-                    </td>
-                    <td>
-                      <select aria-label={`Role for ${r.name}`} value={r.role ?? ""} disabled={r.out} onChange={(e) => update(r.player_id, { role: (e.target.value || null) as Role, via: r.via === "screenshot" ? "screenshot" : "typed", unsure: false })}
-                        className="min-h-[44px] rounded-input border border-fg/10 bg-surface px-1">
-                        <option value="">–</option>{ROLES.map((x) => <option key={x}>{x}</option>)}
-                      </select>
-                    </td>
-                    <td>
-                      <input aria-label={`Credits for ${r.name}`} inputMode="decimal" disabled={r.out} value={r.credits ?? ""} className="num min-h-[44px] w-16 rounded-input border border-fg/10 bg-surface px-2 text-s16"
-                        onChange={(e) => update(r.player_id, { credits: e.target.value === "" ? null : Number(e.target.value), via: r.via === "screenshot" ? "screenshot" : "typed", unsure: false })} />
-                    </td>
-                    <td>
-                      <button className="min-h-[44px] px-2 text-s12 text-slate underline" onClick={() => update(r.player_id, { out: !r.out })}>{r.out ? "Add back" : "Not in Dream11"}</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-          <Button className="w-full" disabled={!complete || saving} onClick={save}>{saving ? "Saving…" : "Looks right"}</Button>
-          {!complete && rows && rows.length > 0 && <p className="text-center text-s12 text-slate">Every player needs a role and credits (or mark him &ldquo;Not in Dream11&rdquo;).</p>}
+            <ul className="space-y-2">
+              {rows.map((r) => (
+                <li key={r.player_id} className={`flex items-center gap-3 rounded-tile bg-surface p-2.5 pr-3 ${r.unsure ? "border-l-4 border-amber" : ""} ${r.out ? "opacity-40" : ""}`}>
+                  <PlayerAvatar name={r.name} url={r.image_url} colour={r.colour} size={36} />
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-s14 font-semibold">{r.name}</div>
+                    <div className="flex items-center gap-1.5 text-s12 text-muted">
+                      <span>{r.team_code}</span>
+                      {r.unsure && <span className="text-amber">· Check this</span>}
+                      {r.from_last_match && <span>· from last match</span>}
+                      <button className="text-muted underline-offset-2 hover:underline" onClick={() => update(r.player_id, { out: !r.out })}>· {r.out ? "Add back" : "Not in list"}</button>
+                    </div>
+                  </div>
+                  <select aria-label={`Role for ${r.name}`} value={r.role ?? ""} disabled={r.out}
+                    onChange={(e) => update(r.player_id, { role: (e.target.value || null) as Role, via: r.via === "screenshot" ? "screenshot" : "typed", unsure: false })}
+                    className="min-h-[40px] rounded-full bg-surface2 px-2 text-s12 font-semibold">
+                    <option value="">Role</option>{ROLES.map((x) => <option key={x}>{x}</option>)}
+                  </select>
+                  <input aria-label={`Credits for ${r.name}`} inputMode="decimal" disabled={r.out} value={r.credits ?? ""} placeholder="Cr"
+                    onChange={(e) => update(r.player_id, { credits: e.target.value === "" ? null : Number(e.target.value), via: r.via === "screenshot" ? "screenshot" : "typed", unsure: false })}
+                    className="num min-h-[40px] w-14 rounded-input bg-surface2 px-2 text-right text-s16 font-bold placeholder:text-muted/60" />
+                </li>
+              ))}
+            </ul>
+          ))}
+          <div className="sticky bottom-0 -mx-5 bg-gradient-to-t from-[#13151D] via-[#13151D] to-transparent px-5 pb-1 pt-4">
+            {!complete && rows && rows.length > 0 && <p className="mb-2 text-center text-s12 text-muted">Every player needs a role and credits, or mark him &ldquo;Not in list&rdquo;.</p>}
+            <Button className="w-full" disabled={!complete || saving} onClick={save}>{saving ? "Saving…" : "Looks right"}</Button>
+          </div>
         </div>
       )}
       {step === 2 && (
-        <div className="space-y-4">
-          <p className="text-s16">{active.length} players · {budget} credits budget · {runType === "pre_toss" ? <Chip tone="clay">Pre-toss (XI not announced)</Chip> : <Chip tone="turf">Post-toss (confirmed XI)</Chip>}</p>
+        <div className="space-y-5">
+          <div className="flex flex-wrap gap-2">
+            <Chip tone="glass">{active.length} players</Chip><Chip tone="glass">{budget} credits budget</Chip>
+            {runType === "pre_toss" ? <Chip tone="amber">Pre-toss (XI not announced)</Chip> : <Chip tone="green">Post-toss (confirmed XI)</Chip>}
+          </div>
           <BuildProgress matchId={match.id} runType={runType} onBack={() => setStep(1)}
             onDone={() => router.push(`/results/${encodeURIComponent(match.id)}?reveal=1`)} />
         </div>
