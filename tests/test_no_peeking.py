@@ -64,7 +64,7 @@ def test_changing_future_or_same_day_results_does_not_change_earlier_predictions
 def test_points_config_refuses_nulls(tmp_path):
     txt = (ROOT / "config" / "dream11_points.yaml").read_text(encoding="utf8")
     bad = tmp_path / "points.yaml"
-    bad.write_text(txt.replace("wicket: 25", "wicket: null", 1), encoding="utf8")
+    bad.write_text(txt.replace("wicket: 30", "wicket: null", 1), encoding="utf8")
     with pytest.raises(PointsConfigError) as e:
         load_points_config(bad)
     assert "T20.bowling.wicket" in str(e.value)

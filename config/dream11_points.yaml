@@ -29,9 +29,9 @@ T20:
         - {min: 50, max: 60, value: -4}
         - {min: 60, max: 70, value: -2}
   bowling:
-    wicket: 25                 # [D11]
+    wicket: 30                 # [APP] Dream11 app How to Play screenshot, 13 Oct 2026 (was 25)
     lbw_bowled_bonus: 0        # not listed
-    dot_ball: 1                # [WEB] search results citing dream11.com (12 Oct 2026); page itself unreachable, UNVERIFIED
+    dot_ball: 1                # [APP] Dream11 app How to Play screenshot, 13 Oct 2026
     maiden: 8                  # [D11]
     haul_mode: "highest"       # assumed, same rule as milestones
     hauls:
@@ -74,9 +74,9 @@ ODI:
         - {min: 40, max: 50, value: -4}
         - {min: 50, max: 60, value: -2}
   bowling:
-    wicket: 25                 # [D11]
+    wicket: 30                 # [APP] Dream11 app How to Play screenshot, 13 Oct 2026 (was 25)
     lbw_bowled_bonus: 0        # not listed
-    dot_ball: 1                # [WEB] search results citing dream11.com (12 Oct 2026); page itself unreachable, UNVERIFIED: 1 point per 3 dot balls
+    dot_ball: 1                # [APP] Dream11 app How to Play screenshot, 13 Oct 2026: 1 point per 3 dot balls
     dot_ball_every: 3
     maiden: 4                  # [D11]
     haul_mode: "highest"
@@ -117,7 +117,7 @@ Test:
       min_balls: 0
       bands: []                # [D11] none in Tests
   bowling:
-    wicket: 16                 # [D11]
+    wicket: 20                 # [APP] Dream11 app How to Play screenshot, 13 Oct 2026 (was 16)
     lbw_bowled_bonus: 0        # not listed
     dot_ball: 0                # no confirmed Test value found (TODO-CONFIRM from the Dream11 app)
     maiden: 0                  # [D11] none in Tests
@@ -129,7 +129,7 @@ Test:
       min_overs: 0
       bands: []                # [D11] none in Tests
   fielding:
-    catch: 8
+    catch: 8                   # [APP] Dream11 app How to Play screenshot, 13 Oct 2026
     catch_haul: {catches: 3, value: 4}   # [SK] (T20 value, assumed same)
     stumping: 12
     run_out_direct: 12
