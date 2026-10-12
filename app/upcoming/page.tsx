@@ -128,7 +128,7 @@ function SwipeDeck({ cards, onChoose }: { cards: Card[]; onChoose: (m: Card, c: 
   }, [commit]);
   return (
     <div>
-      <div className="relative h-[min(68vh,520px)] min-h-[440px]">
+      <div className="relative h-[clamp(320px,calc(100vh-420px),500px)]">
         {cards[1] && <motion.div className="absolute inset-0" style={{ scale: nextScale }} aria-hidden><FixtureCard m={cards[1]} /></motion.div>}
         <motion.div key={top.id} className="absolute inset-0 cursor-grab touch-pan-y active:cursor-grabbing" style={{ x, rotate }}
           drag="x" dragConstraints={{ left: 0, right: 0 }} dragElastic={0.9}
@@ -138,7 +138,7 @@ function SwipeDeck({ cards, onChoose }: { cards: Card[]; onChoose: (m: Card, c: 
           <motion.span style={{ opacity: skip }} className="num pointer-events-none absolute right-5 top-16 rotate-12 rounded-tile border-4 border-muted px-3 text-s34 font-extrabold text-muted">SKIP</motion.span>
         </motion.div>
       </div>
-      <div className="mt-6 flex items-center justify-center gap-8">
+      <div className="mt-5 flex items-center justify-center gap-8">
         <button onClick={() => commit("skip")} aria-label={`Skip ${code(top.team_a)} v ${code(top.team_b)}`}
           className="flex h-16 w-16 items-center justify-center rounded-full bg-surface2 text-muted shadow-card transition hover:text-ink"><X size={28} strokeWidth={2} /></button>
         <button onClick={() => commit("play")} aria-label={`Play this match: ${code(top.team_a)} v ${code(top.team_b)}`}
@@ -189,7 +189,7 @@ function DeckSkeleton() {
   return (
     <div aria-label="Loading fixtures">
       <div className="mb-5 flex gap-4">{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-[66px] w-[66px] !rounded-full" />)}</div>
-      <div className="flex h-[440px] flex-col justify-between rounded-card bg-surface p-5">
+      <div className="flex h-[clamp(320px,calc(100vh-420px),500px)] flex-col justify-between rounded-card bg-surface p-5">
         <Skeleton className="h-7 w-16 !rounded-full" />
         <div className="flex items-center justify-center gap-8"><Skeleton className="h-20 w-20 !rounded-full" /><Skeleton className="h-20 w-20 !rounded-full" /></div>
         <div className="space-y-2"><Skeleton className="h-4 w-2/3" /><Skeleton className="h-4 w-1/2" /></div>

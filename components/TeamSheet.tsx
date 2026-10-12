@@ -22,15 +22,15 @@ export function TeamSheet({ ids, cap, vc, players, reveal, onTap, mine = new Set
   const rowDelay = (ri: number) => ri * 0.12;
   return (
     <div className="rounded-card bg-surface p-3 shadow-card">
-      <div className="relative overflow-hidden rounded-[48%/38%] px-2 py-6"
+      <div className="relative overflow-hidden rounded-[44%/26%] px-6 py-8"
         style={{ background: "radial-gradient(80% 60% at 50% 0%, rgba(255,255,255,0.16), transparent 60%), radial-gradient(120% 90% at 50% 50%, #17603A 0%, #0F4229 55%, #0A2A1B 100%)" }}>
         <div aria-hidden className="absolute left-1/2 top-[18%] h-[64%] w-[16%] -translate-x-1/2 rounded-lg bg-[#D9C9A3]/25" />
-        <div aria-hidden className="absolute inset-3 rounded-[48%/38%] border border-white/10" />
+        <div aria-hidden className="absolute inset-3 rounded-[44%/26%] border border-white/10" />
         <div className="relative flex flex-col gap-5">
           {rows.map(({ role, list }, ri) => (
-            <div key={role} className="flex items-center gap-1">
-              <span className="w-9 shrink-0 text-[11px] font-semibold text-white/55">{role}</span>
-              <div className="flex flex-1 flex-wrap justify-center gap-x-2 gap-y-3">
+            <div key={role} className="flex flex-col items-center gap-1.5">
+              <span className="rounded-full bg-black/25 px-2 text-[10px] font-semibold text-white/60">{role}</span>
+              <div className="flex flex-wrap justify-center gap-x-2 gap-y-3">
                 {list.map((pid) => {
                   const p = players[pid];
                   const isC = pid === cap, isV = pid === vc;
