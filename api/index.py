@@ -629,16 +629,17 @@ def results_list():
     for mid, rid, rt, rst, mst, start, xi, has_res, has_met in rows:
         m = match_view(s, mid)
         m.pop("_start")
+        over = mst in ("finished", "abandoned") or (start is not None and start < dt.datetime.now(dt.timezone.utc) - dt.timedelta(hours=3))
         if has_met:
             state = "Scored"
-        elif mst == "finished":
+        elif over:
             state = "Enter results"
         elif xi and rt == "pre_toss":
             state = "Toss done: refresh"
         else:
             state = "Final" if rt == "post_toss" else "Provisional"
         out.append({**m, "run_id": str(rid), "run_status": rst, "state": state,
-                    "finished": mst in ("finished", "abandoned")})
+                    "finished": over})
     out.sort(key=lambda x: x["start_time"] or "", reverse=True)
     return {"matches": out}
 
