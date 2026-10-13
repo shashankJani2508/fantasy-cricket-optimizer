@@ -30,7 +30,9 @@ def derive_bowl_band(fmt, overs):
 
 class PgStore:
     def __init__(self, url=None, schema="public"):
-        self.conn = psycopg.connect(url or env("DATABASE_URL"), autocommit=True)
+        # direct (non-pooled) Neon host: the pooler shares server sessions, so a SET search_path from one client
+        # (e.g. the tests' "dev" schema) could leak into another; a direct connection keeps its own session
+        self.conn = psycopg.connect((url or env("DATABASE_URL")).replace("-pooler.", "."), autocommit=True)
         self.conn.execute("SET TIME ZONE 'UTC'")
         # always explicit: Neon's pooled connections can carry a previous client's search_path
         self.conn.execute(psycopg.sql.SQL("SET search_path TO {}").format(psycopg.sql.Identifier(schema)))
