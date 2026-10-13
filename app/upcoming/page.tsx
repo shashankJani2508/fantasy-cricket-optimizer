@@ -7,6 +7,7 @@ import { api, Match, Star } from "@/lib/api";
 import { homeArt, matchArt, ring, splitSeries, venueText } from "@/lib/teams";
 import { Chip, countdown, ErrorNote, haptic, localTime, Skeleton, TeamBadge, useAuth, useSnack } from "@/components/ui";
 import { SetupSheet } from "@/components/SetupSheet";
+import { Hero } from "@/components/Hero";
 
 type Card = Match & { rain_chance: number | null; choice: "play" | "skip" | null; stars?: Record<string, Star[]>; team_ready?: boolean };
 type Deck = { matches: Card[]; next_match: Match | null; stale_since: string | null };
@@ -49,7 +50,8 @@ export default function Upcoming() {
 
   return (
     <section aria-labelledby="h-up">
-      <header className="mb-5 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+      <Hero onPlay={() => document.getElementById("deck")?.scrollIntoView({ behavior: "smooth" })} />
+      <header id="deck" className="mb-5 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
         <h1 id="h-up" className="num text-s26 font-bold">This week</h1>
         <div className="flex flex-wrap items-center gap-2">
           {deck?.stale_since && <Chip tone="amber">Saved fixtures from {localTime(deck.stale_since)}</Chip>}
