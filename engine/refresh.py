@@ -49,7 +49,46 @@ def upsert_match(store, m):
     return mid
 
 
-def refresh_fixtures(store, client, days=7, max_series=15):
+def _series_start(x, now):
+    """startDate is "2026-10-18" or "Oct 18" (seen in tests/fixtures/cricketdata/series_list.json); for the short form
+    take the year that puts it closest to now."""
+    v = (x.get("startDate") or "").strip()
+    try:
+        return dt.datetime.strptime(v, "%Y-%m-%d").replace(tzinfo=dt.timezone.utc)
+    except ValueError:
+        pass
+    try:
+        d = dt.datetime.strptime(v, "%b %d")
+    except ValueError:
+        return None
+    cands = [d.replace(year=now.year + k, tzinfo=dt.timezone.utc) for k in (-1, 0, 1)]
+    return min(cands, key=lambda c: abs((c - now).total_seconds()))
+
+
+def upcoming_series(client, now, end, cfg, max_pages=6):
+    """International / IPL series that started in the last 45 days or start this week, from the series list
+    (sorted newest start first). Catches series whose first match hasn't begun yet."""
+    keys = [t.lower() for t in cfg.get("national_teams", [])] + [k.lower() for k in cfg.get("ipl_series_contains", [])] + ["icc", "uae", "usa", "tri-series", "tri-nation", "tri series", "quadrangular", "t20i", " odi"]
+    out = []
+    for page in range(max_pages):
+        rows = client.get("series", offset=page * 25) or []
+        if not rows:
+            break
+        oldest = None
+        for x in rows:
+            st = _series_start(x, now)
+            if st is None:
+                continue
+            oldest = st if oldest is None or st < oldest else oldest
+            name = (x.get("name") or "").lower()
+            if now - dt.timedelta(days=45) <= st <= end and any(k in name for k in keys) and " a tour" not in name                     and "u19" not in name:
+                out.append(x["id"])
+        if oldest and oldest < now - dt.timedelta(days=45):
+            break
+    return out
+
+
+def refresh_fixtures(store, client, days=7, max_series=30):
     """This week's fixtures: current matches plus the match list of every series in play. (The general
     /matches list is not date-ordered: 15,780 rows on 12 Oct 2026, so it can't answer "next 7 days".)"""
     now = dt.datetime.now(dt.timezone.utc)
@@ -67,6 +106,7 @@ def refresh_fixtures(store, client, days=7, max_series=15):
             continue   # hidden competition: no series lookup (saves CricketData.org calls)
         if m.get("series_id") and m["series_id"] not in series:
             series.append(m["series_id"])
+    series += [sid for sid in upcoming_series(client, now, end, cfg) if sid not in series]
     items = list(current)
     for sid in series[:max_series]:
         items += client.series_info(sid).get("matchList") or []
