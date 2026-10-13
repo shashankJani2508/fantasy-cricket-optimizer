@@ -515,3 +515,25 @@ Work in order. Show a plan before each phase and a summary after.
 - How Python functions and Next.js share one Vercel project (or use two projects).
 - Solver compatibility with Vercel's Python runtime.
 - Bowling styles: CricketData.org squads include `bowlingStyle` for current players; historical coverage for pace vs spin pitch type still to be checked (run 2).
+
+---
+
+## 21. Status and decisions log (12–13 Oct 2026 build session)
+
+**Live:** https://fantasy-cricket-optimizer-lovat.vercel.app · **Repo:** https://github.com/shashankJani2508/fantasy-cricket-optimizer (branch `scoring-engine`, mirrored to `main`).
+
+Built and deployed: Gemini's 4 jobs (`engine/gemini.py`), resumable run pipeline (`engine/pipeline.py`, one step per `/api/runs/{id}/advance` call), Open-Meteo, learning loop (`engine/learning.py`), FastAPI API (`api/index.py`), Next.js UI (dark redesign per `docs/UI_REDESIGN.md`, desktop left rail + phone tabs), Vercel deploy with daily cron. Migrations 007–015 applied (dev, then public).
+
+Decisions made by Shashank in this session:
+- **Passcode off:** no `APP_PASSCODE` set, the link is private to Aryan (code still supports one).
+- **News:** Google News RSS (our code fetches/filters/saves `news_items`) **and** Google Search grounding in the same moderator call; each adjustment cites an RSS id or a grounding link, code-checked; conflicts → no change + warning. On a 429 quota error the moderator reads RSS only.
+- **Learnings:** two modes. Real flags after 5 matches (was 10); Demo after every match. Both need Aryan's approval.
+- **Upcoming tab:** internationals (men's and women's) and IPL only (`config/competitions.yaml`); domestic hidden but still in history. Fixtures from current matches (all pages) + series list (international series starting this week).
+- **Match format:** the match name wins when explicit (CricketData tagged T20Is as "odi").
+- **Dream11 rules/points:** rules filled from the app (11 players, 100 credits, roles 1–7, 7 per side, C 2x, VC 1.5x). Points from app screenshots: wicket 30 (T20/ODI), 20 (Test); dot ball T20 1, ODI 1 per 3. Other values still provisional.
+- **Setup is automatic:** screenshots read in parallel (up to 15, compressed in the browser); unknown names searched in team history, else created as new players (new-player average from real first-match points, migration 014); same-name players told apart by CricketData role. Review list in two groups, then Looks right → Build.
+- **Results:** "Use calculated points" (from the scorecard, no screenshot) or upload the Dream11 points screenshot (adds rank and an exact check).
+- **Photos:** CricketData `playerImg` (real ones) else Wikimedia Commons via Wikidata (exact person, free licence, credit shown). No photos from JioHotstar or other sites (copyright). Daily refresh loads squads and photos for upcoming matches.
+- **Hero banner:** original artwork made in Canva for this app (`public/hero.jpg`).
+
+Open items: Gemini key's Google Search quota (429) — needs the key owner to raise the search/spend limit; confirmed-XI source (Rebuild button is always available meanwhile); remaining Dream11 points values; IPL series name (TODO-CONFIRM); Playwright tests.
