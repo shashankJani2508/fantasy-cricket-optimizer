@@ -189,8 +189,6 @@ function FixtureCard({ m }: { m: Card }) {
       <motion.article onPointerMove={tilt} onPointerLeave={() => { rx.set(0); ry.set(0); }}
         style={{ rotateX: rx, rotateY: ry, transformStyle: "preserve-3d", ...((m.team_a?.country && m.team_a.country === m.team_b?.country && homeArt(m.team_a.country)) || matchArt(m.team_a?.colour, m.team_b?.colour)) }}
         className="noise relative flex h-full select-none flex-col overflow-hidden rounded-card p-5 shadow-card" aria-label={`${m.team_a?.name} vs ${m.team_b?.name}`}>
-        <Stars list={stars(m.team_a)} side="left" />
-        <Stars list={stars(m.team_b)} side="right" />
         <div className="relative flex items-center justify-between gap-2">
           <Chip tone="glass">{m.format}</Chip>
           {live ? <Chip tone="red">LIVE</Chip> : <span className="num rounded-full bg-black/35 px-3 py-1 text-s12 font-bold text-orange">{countdown(m.start_time)}</span>}
