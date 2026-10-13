@@ -665,6 +665,33 @@ class Results(BaseModel):
     entered_via: str = "screenshot"
 
 
+@app.post("/api/matches/{mid}/results/calculated", dependencies=[Depends(need_passcode)])
+def calculated_results(mid: str):
+    """No screenshot: points for Aryan's team come from the match scorecard (our Dream11 points calculator)."""
+    s = db()
+    m = match_view(s, mid)
+    from engine.fresh import fill_recent
+    from engine.points import load_points_config
+    series = (s.match(mid) or {}).get("series_id")
+    ids = [p["player_id"] for p in match_players(s, mid)]
+    if series and ids:
+        fill_recent(s, _client(s), load_points_config(ROOT / "config" / "dream11_points.yaml"), ids,
+                    (m["_start"] + dt.timedelta(days=1)).date().isoformat(), series, days=1)
+    rid = learning.match_run(s, mid)
+    team = s.q("""SELECT player_ids FROM teams_picked WHERE run_id IN (SELECT id FROM runs WHERE match_id = %s)
+                  AND kind IN ('aryan_final', 'system') ORDER BY (kind = 'aryan_final') DESC, id DESC LIMIT 1""", (mid,))
+    if not rid or not team:
+        raise HTTPException(404, "No team built for this match.")
+    pts = dict(s.q("SELECT player_id, total_points FROM player_match_points WHERE match_id = %s", (mid,)))
+    if not pts:
+        raise HTTPException(409, "The scorecard isn't available yet. Try again a little later, or upload the Dream11 points screenshot.")
+    rows = [{"player_id": p, "points": float(pts.get(p, 0))} for p in team[0][0]]
+    learning.save_results(s, mid, rows, None, "calculated")
+    s.q("UPDATE matches SET status = 'finished' WHERE id = %s AND status <> 'abandoned' RETURNING id", (mid,))
+    res = learning.after_results(s, mid, Gemini(s))
+    return {"ok": True, "players": len(rows), "suggestions": len(res["suggestions"])}
+
+
 @app.put("/api/matches/{mid}/results", dependencies=[Depends(need_passcode)])
 def save_results(mid: str, body: Results):
     s = db()

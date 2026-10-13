@@ -52,6 +52,17 @@ export function ResultsEntry({ run, onSaved }: { run: RunView; onSaved: () => vo
   return (
     <section className="space-y-4" aria-labelledby="h-res">
       <h2 id="h-res" className="num text-s20 font-bold">Enter results</h2>
+      <div className="rounded-card bg-surface p-4 shadow-card">
+        <p className="font-semibold">Quickest: use calculated points</p>
+        <p className="mt-1 text-s12 text-muted">We work out every player&apos;s Dream11 points from the match scorecard. No screenshot needed; add one below only if you want your rank or an exact check.</p>
+        <Button className="mt-3 w-full" disabled={busy} onClick={async () => {
+          if (!(await ask())) return;
+          setBusy(true); setErr(null);
+          try { await api(`/matches/${encodeURIComponent(run.match_id)}/results/calculated`, { method: "POST" }); haptic(); snack({ text: "Results saved from the scorecard." }); onSaved(); }
+          catch (e: any) { setErr(e.message); }
+          setBusy(false);
+        }}>{busy ? "Working…" : "Use calculated points"}</Button>
+      </div>
       <label className={`flex cursor-pointer flex-col items-center gap-2 rounded-card border-2 border-dashed border-white/15 bg-surface px-4 py-6 text-center ${busy ? "opacity-60" : ""}`}>
         <span className="flex h-12 w-12 items-center justify-center rounded-full bg-surface2"><Camera size={22} strokeWidth={1.75} /></span>
         <span className="font-semibold">{busy ? "Working…" : "Upload Dream11 points screenshot"}</span>
