@@ -27,6 +27,11 @@ CRICKETER = "Q12299841"
 COUNTRIES = {  # team name -> (country item, national cricket team item), confirmed by the saved searches
     "Pakistan": ("Q843", "Q182538"),
     "Sri Lanka": ("Q854", "Q203092"),
+    # confirmed 13 Oct 2026, tests/fixtures/wikimedia/search_national_teams.json
+    "India": ("Q668", "Q1143793"), "West Indies": (None, "Q912881"), "Australia": ("Q408", "Q142555"),
+    "England": ("Q21", "Q1321565"), "New Zealand": ("Q664", "Q1143797"), "South Africa": ("Q258", "Q1423651"),
+    "Bangladesh": ("Q902", "Q806537"), "Afghanistan": ("Q889", "Q86477"), "Zimbabwe": ("Q954", "Q1254704"),
+    "Ireland": ("Q27", "Q137660"),
 }
 RECHECK_DAYS = 30
 
@@ -61,21 +66,31 @@ def _ids(claims, prop):
             if isinstance(c["mainsnak"].get("datavalue", {}).get("value"), dict)}
 
 
+def initials_ok(short, label):
+    """'K Pooran' / 'KMA Paul' vs 'Nicholas Pooran' / 'Keemo Paul': same surname and the first given-name initial
+    appears in the short form's initials. Only used with the cricketer + team + single-candidate checks."""
+    a, b = norm(short), norm(label)
+    if len(a) < 2 or len(b) < 2 or a[-1] != b[-1]:
+        return False
+    given = "".join(w[0] for w in a[:-1]) if not (len(a[0]) <= 4 and short.split()[0].isupper()) else a[0]
+    return b[0][0] in given
+
+
 def pick(entities, names, team):
     """The single entity that is this player, or (None, reason)."""
     want = {" ".join(norm(n)) for n in names if n}
     country, nat_team = COUNTRIES.get(team, (None, None))
-    if not country:
+    if not country and not nat_team:
         return None, f"no confirmed Wikidata country for {team}"
     hits = []
     for q, e in entities.items():
         labels = [e.get("labels", {}).get("en", {}).get("value", "")] + [a["value"] for a in e.get("aliases", {}).get("en", [])]
-        if not want & {" ".join(norm(l)) for l in labels}:
+        if not want & {" ".join(norm(l)) for l in labels} and not any(initials_ok(n, l) for n in names if n for l in labels):
             continue
         c = e.get("claims", {})
         if CRICKETER not in _ids(c, "P106"):
             continue
-        if country not in _ids(c, "P27") | _ids(c, "P1532") and nat_team not in _ids(c, "P54"):
+        if not (country and country in _ids(c, "P27") | _ids(c, "P1532")) and nat_team not in _ids(c, "P54"):
             continue
         hits.append(q)
     if len(hits) != 1:
@@ -86,7 +101,8 @@ def pick(entities, names, team):
 def wikimedia_photo(names, team, get=http_json):
     """-> ({url, license, author, page}, None) or (None, reason)."""
     ids = []
-    for n in list(dict.fromkeys(n for n in names if n))[:3]:
+    surnames = [norm(n)[-1] for n in names if n and len(norm(n)) > 1]
+    for n in list(dict.fromkeys([n for n in names if n] + surnames))[:4]:
         d = get(WD + urllib.parse.urlencode({"action": "wbsearchentities", "search": n, "language": "en", "type": "item",
                                              "limit": 7, "format": "json"}))
         ids += [x["id"] for x in d.get("search", []) if x["id"] not in ids]

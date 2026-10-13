@@ -824,6 +824,21 @@ def cron(request: Request):
     s = db()
     c = _client(s)
     saved = refresh_fixtures(s, c)
+    # load squads (players + CricketData.org photos) for upcoming shown matches that don't have one yet
+    from engine.refresh import load_squad
+    from engine.competitions import classify, load, visible
+    from engine.photos import refresh_player
+    cfg = load()
+    for mid in set(saved):
+        m = match_view(s, mid)
+        g = s.one("SELECT gender FROM matches WHERE id = %s", (mid,))
+        if m["status"] != "upcoming" or not visible(classify((m["team_a"] or {}).get("name"), (m["team_b"] or {}).get("name"), m["series"], g, cfg), g, cfg):
+            continue
+        if not s.one("SELECT 1 FROM match_xi WHERE match_id = %s LIMIT 1", (mid,)):
+            load_squad(s, c, mid)
+        for pid, team in s.q("""SELECT x.player_id, t.name FROM match_xi x JOIN teams t ON t.id = x.team_id
+                                JOIN players p ON p.id = x.player_id WHERE x.match_id = %s AND p.image_url IS NULL""", (mid,)):
+            refresh_player(s, pid, team)
     pipeline.log(s, "system", "daily_refresh", None, {"matches": len(saved), "calls": c.calls_this_run,
                                                       "stale": c.data_stale, "warnings": c.warnings[:5]})
     return {"matches": len(saved), "calls": c.calls_this_run, "data_stale": c.data_stale}

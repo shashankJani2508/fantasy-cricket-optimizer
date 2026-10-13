@@ -1,0 +1,296 @@
+{
+ "India": {
+  "team": [
+   [
+    "Q1143793",
+    "India national cricket team",
+    "men’s cricket team representing India"
+   ],
+   [
+    "Q17092401",
+    "India national cricket team record by opponent",
+    null
+   ],
+   [
+    "Q6019665",
+    "India national cricket team selectors",
+    "India national cricket teams selectors"
+   ]
+  ],
+  "country": [
+   [
+    "Q668",
+    "India",
+    "country in South Asia"
+   ],
+   [
+    "Q1415",
+    "Indiana",
+    "state of the United States of America"
+   ],
+   [
+    "Q6346",
+    "Indianapolis",
+    "capital city of the U.S. state of Indiana and seat of Marion County"
+   ]
+  ]
+ },
+ "West Indies": {
+  "team": [
+   [
+    "Q912881",
+    "West Indies cricket team",
+    "multinational cricket team"
+   ],
+   [
+    "Q60770118",
+    "West Indies cricket team against Afghanistan in India in 2019–20",
+    "International cricket tour"
+   ],
+   [
+    "Q24942538",
+    "West Indies cricket team in India in 1983–84",
+    "international cricket tour"
+   ]
+  ],
+  "country": null
+ },
+ "Australia": {
+  "team": [
+   [
+    "Q142555",
+    "Australia national cricket team",
+    "national sports team"
+   ],
+   [
+    "Q24189726",
+    "Australia national cricket team record by opponent",
+    null
+   ],
+   [
+    "Q123677622",
+    "Australia national cricket team in India, 2010–11",
+    null
+   ]
+  ],
+  "country": [
+   [
+    "Q408",
+    "Australia",
+    "country in Oceania"
+   ],
+   [
+    "Q3960",
+    "Australian continent",
+    "continent in the Earth's Southern Hemisphere"
+   ],
+   [
+    "Q15764794",
+    "Australian and New Zealand Journal of Obstetrics and Gynaecology",
+    "journal"
+   ]
+  ]
+ },
+ "England": {
+  "team": [
+   [
+    "Q1321565",
+    "England cricket team",
+    "national cricket team"
+   ]
+  ],
+  "country": [
+   [
+    "Q21",
+    "England",
+    "country in north-west Europe, part of the United Kingdom"
+   ],
+   [
+    "Q179876",
+    "Kingdom of England",
+    "historic kingdom on the British Isles (927–1649; 1660–1707)"
+   ],
+   [
+    "Q11111401",
+    "England",
+    "family name"
+   ]
+  ]
+ },
+ "New Zealand": {
+  "team": [
+   [
+    "Q1143797",
+    "New Zealand national cricket team",
+    "International cricket team of New Zealand"
+   ],
+   [
+    "Q24190060",
+    "New Zealand national cricket team record by opponent",
+    null
+   ]
+  ],
+  "country": [
+   [
+    "Q664",
+    "New Zealand",
+    "island country in the southwest Pacific Ocean"
+   ],
+   [
+    "Q23893915",
+    "New Zealand Organisms Register",
+    "catalogue of scientific names of New Zealand biota"
+   ],
+   [
+    "Q1048192",
+    "New Zealand Labour Party",
+    "centre-left political party in New Zealand"
+   ]
+  ]
+ },
+ "South Africa": {
+  "team": [
+   [
+    "Q1423651",
+    "South Africa national cricket team",
+    "South Africa cricket"
+   ],
+   [
+    "Q138585805",
+    "South Africa national cricket team record by opponent",
+    null
+   ]
+  ],
+  "country": [
+   [
+    "Q258",
+    "South Africa",
+    "country in southern Africa"
+   ],
+   [
+    "Q6723",
+    "UTC+02:00",
+    "identifier for a time offset from UTC of +2"
+   ],
+   [
+    "Q193619",
+    "Union of South Africa",
+    "state in southern Africa from 1910 to 1961, predecessor to the Republic of South Africa"
+   ]
+  ]
+ },
+ "Bangladesh": {
+  "team": [
+   [
+    "Q806537",
+    "Bangladesh national cricket team",
+    "national cricket team of Bangladesh"
+   ],
+   [
+    "Q105226612",
+    "Bangladesh national cricket team record by opponent",
+    "record of Bangladesh cricket"
+   ],
+   [
+    "Q142586",
+    "Bangladesh national cricket team statistics and records",
+    "Wikimedia list article"
+   ]
+  ],
+  "country": [
+   [
+    "Q902",
+    "Bangladesh",
+    "country in South Asia"
+   ],
+   [
+    "Q1592924",
+    "Bangladesh",
+    "American record producer"
+   ],
+   [
+    "Q6906",
+    "UTC+06:00",
+    "identifier for a time offset from UTC of +6"
+   ]
+  ]
+ },
+ "Afghanistan": {
+  "team": [
+   [
+    "Q86477",
+    "Afghanistan national cricket team",
+    "national sports team"
+   ]
+  ],
+  "country": [
+   [
+    "Q889",
+    "Afghanistan",
+    "country in Central and South Asia"
+   ],
+   [
+    "Q27715795",
+    "Afghanistan",
+    "academic journal"
+   ],
+   [
+    "Q1138904",
+    "Kingdom of Afghanistan",
+    "kingdom in Central Asia between 1926–1973"
+   ]
+  ]
+ },
+ "Zimbabwe": {
+  "team": [
+   [
+    "Q1254704",
+    "Zimbabwe national cricket team",
+    "cricket team"
+   ]
+  ],
+  "country": [
+   [
+    "Q954",
+    "Zimbabwe",
+    "sovereign state in southern Africa"
+   ],
+   [
+    "Q140447562",
+    "Zimbabwe",
+    null
+   ],
+   [
+    "Q327100",
+    "Zimbabwe men's national football team",
+    "men's national association football team representing Zimbabwe"
+   ]
+  ]
+ },
+ "Ireland": {
+  "team": [
+   [
+    "Q137660",
+    "Ireland cricket team",
+    "Sports team representing the island of Ireland in international cricket"
+   ]
+  ],
+  "country": [
+   [
+    "Q27",
+    "Ireland",
+    "country in Northwestern Europe"
+   ],
+   [
+    "Q22890",
+    "Ireland",
+    "island in the North Atlantic Ocean"
+   ],
+   [
+    "Q215530",
+    "Kingdom of Ireland",
+    "kingdom on the island of Ireland between 1542 and 1801"
+   ]
+  ]
+ }
+}
