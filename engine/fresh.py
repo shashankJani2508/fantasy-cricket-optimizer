@@ -15,6 +15,16 @@ def match_format(match_type, name):
     """CricketData.org matchType -> our format. None = not supported (e.g. The Hundred)."""
     if "hundred" in (name or "").lower():
         return None
+    # the match name wins when it is explicit: CricketData.org's series list tagged
+    # "India vs West Indies, 4th T20I" as matchType "odi" (seen 13 Oct 2026)
+    import re
+    n = name or ""
+    if re.search(r"\bT20I?\b", n):
+        return "T20"
+    if re.search(r"\bODI\b", n):
+        return "ODI"
+    if re.search(r"\bTest\b", n):
+        return "Test"
     return {"t20": "T20", "odi": "ODI", "test": "Test"}.get((match_type or "").lower())
 
 

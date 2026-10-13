@@ -193,7 +193,7 @@ function FixtureCard({ m }: { m: Card }) {
           <Chip tone="glass">{m.format}</Chip>
           {live ? <Chip tone="red">LIVE</Chip> : <span className="num rounded-full bg-black/35 px-3 py-1 text-s12 font-bold text-orange">{countdown(m.start_time)}</span>}
         </div>
-        <div className="relative flex flex-1 items-center justify-center gap-5" style={{ transform: "translateZ(40px)" }}>
+        <div className="relative mx-auto my-auto flex items-center justify-center gap-5 rounded-tile border border-white/15 bg-black/45 px-6 py-5 backdrop-blur-md" style={{ transform: "translateZ(40px)" }}>
           <Side t={m.team_a} />
           <span className="num text-[44px] font-extrabold italic text-orange drop-shadow">VS</span>
           <Side t={m.team_b} />
@@ -216,14 +216,14 @@ function FixtureCard({ m }: { m: Card }) {
 /** Real photos (CricketData.org or Wikimedia) of each side's top players, faded into the poster. */
 function Stars({ list, side }: { list: Star[]; side: "left" | "right" }) {
   if (!list.length) return null;
-  const mask = "radial-gradient(ellipse 60% 65% at 50% 40%, black 45%, transparent 75%)";
+  const mask = "linear-gradient(to bottom, black 55%, transparent 95%), radial-gradient(ellipse 70% 80% at 50% 35%, black 55%, transparent 80%)";
   return (
-    <div aria-hidden className={`pointer-events-none absolute top-10 flex ${side === "left" ? "-left-6" : "-right-6 flex-row-reverse"}`}>
+    <div aria-hidden className={`pointer-events-none absolute inset-y-0 flex items-end ${side === "left" ? "left-0" : "right-0 flex-row-reverse"}`}>
       {list.map((p, i) => (
         // eslint-disable-next-line @next/next/no-img-element
-        <img key={p.player_id} src={p.image_url} alt="" width={150} height={190} loading="lazy"
-          className={`h-[190px] w-[150px] object-cover ${i ? "-mx-10 mt-10 opacity-60" : "opacity-80"}`}
-          style={{ maskImage: mask, WebkitMaskImage: mask }} />
+        <img key={p.player_id} src={p.image_url} alt="" width={220} height={300} loading="lazy"
+          className={`object-cover object-top ${i ? "-mx-16 mb-24 h-[240px] w-[180px] opacity-70" : "mb-16 h-[300px] w-[220px] opacity-95"}`}
+          style={{ maskImage: mask, WebkitMaskImage: mask, filter: "contrast(1.08) saturate(1.1)" }} />
       ))}
     </div>
   );

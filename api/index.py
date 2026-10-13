@@ -142,12 +142,16 @@ def country_of(team, series):
 
 def stars(s, mid, n=2):
     """Per team: squad players with a real photo, highest average Dream11 points first."""
-    rows = s.q("""SELECT t.name, p.id, p.full_name, p.image_url, avg(pm.total_points) a FROM match_xi x
-                  JOIN players p ON p.id = x.player_id JOIN teams t ON t.id = x.team_id
+    rows = s.q("""SELECT t.name, p.id, p.full_name, p.image_url, bool_or(x.match_id = %s) here, avg(pm.total_points) a
+                  FROM match_xi x JOIN players p ON p.id = x.player_id JOIN teams t ON t.id = x.team_id
+                  JOIN matches mm ON mm.id = x.match_id
                   LEFT JOIN player_match_points pm ON pm.player_id = p.id
-                  WHERE x.match_id = %s AND p.image_url IS NOT NULL GROUP BY 1, 2, 3, 4 ORDER BY a DESC NULLS LAST""", (mid,))
+                  WHERE p.image_url IS NOT NULL AND t.id IN (SELECT team_a_id FROM matches WHERE id = %s
+                                                             UNION SELECT team_b_id FROM matches WHERE id = %s)
+                    AND (x.match_id = %s OR mm.start_time > now() - interval '90 days')
+                  GROUP BY 1, 2, 3, 4 ORDER BY here DESC, max(mm.start_time) DESC, a DESC NULLS LAST""", (mid, mid, mid, mid))
     out = {}
-    for team, pid, name, url, _ in rows:
+    for team, pid, name, url, _, _a in rows:
         if len(out.setdefault(team, [])) < n:
             out[team].append({"player_id": pid, "name": name, "image_url": url})
     return out
