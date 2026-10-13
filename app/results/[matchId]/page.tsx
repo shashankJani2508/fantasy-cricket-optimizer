@@ -128,6 +128,13 @@ function MatchView() {
       {finished && scored === false && aryan && <ResultsEntry run={run} onSaved={() => { setScored(true); setTab("scorecard"); load(); }} />}
       {finished && scored === false && !aryan && <p className="text-s14 text-muted">Results not entered yet.</p>}
       {!finished && tab === "system" && aryan && <button onClick={() => setTab("mine")} className="w-full rounded-full bg-surface2 py-3 font-semibold">Edit my team</button>}
+      {!finished && aryan && !(m.xi_announced && run.run_type === "pre_toss") && (
+        <div className="rounded-tile bg-surface p-4 shadow-card">
+          <p className="mb-3 text-s14 text-muted">Rebuild with the latest news{m.xi_announced ? " and the confirmed XI" : ""}. Best right after the toss.</p>
+          {rebuild ? <BuildProgress matchId={mid} runType={m.xi_announced ? "post_toss" : "pre_toss"} onDone={() => { setRun(null); setRebuild(false); load(); }} label="Rebuild team" />
+            : <Button className="w-full" onClick={() => setRebuild(true)}>Rebuild team</Button>}
+        </div>
+      )}
       </div>
 
       <PlayerSheet p={sel} run={run} onClose={() => setSel(null)} isCap={sel?.player_id === shown.captain_id} isVc={sel?.player_id === shown.vc_id} />
